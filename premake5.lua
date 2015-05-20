@@ -1,8 +1,8 @@
 -- premake5.lua
-solution "HelloWorld"
+solution "GameBae"
   configurations { "Debug", "Release" }
 
-project "HelloWorld"
+project "gamebae"
   kind "ConsoleApp"
   language "C"
   targetdir "bin/%{cfg.buildcfg}"
