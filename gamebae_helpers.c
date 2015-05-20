@@ -6,7 +6,7 @@
 
 int stringMatches(char *str1, char *str2) {
     int check;
-    check = strncmp(str1, str2, 0);
+    check = strncmp(str1, str2, 4);
     // check is the number of characters that are wrong.
     // if there are 0 characters wrong, then the strings match.
     // kinda weird, right?
