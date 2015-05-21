@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:atom="http://www.w3.org/2005/Atom"
+	>
+<channel>
+	<title>Comments on: Quick Emulator Update</title>
+	<atom:link href="http://codeslinger.co.uk/pages/blog/wordpress/?feed=rss2&#038;p=7" rel="self" type="application/rss+xml" />
+	<link>http://codeslinger.co.uk/pages/blog/wordpress/?p=7</link>
+	<description>The art of emulator programming</description>
+	<pubDate>Thu, 21 Jul 2011 18:52:05 +0000</pubDate>
+	<generator>http://wordpress.org/?v=2.5.1</generator>
+		<item>
+		<title>By: Kanter35</title>
+		<link>http://codeslinger.co.uk/pages/blog/wordpress/?p=7#comment-125</link>
+		<dc:creator>Kanter35</dc:creator>
+		<pubDate>Thu, 09 Sep 2010 07:35:51 +0000</pubDate>
+		<guid isPermaLink="false">http://codeslinger.co.uk/pages/blog/wordpress/?p=7#comment-125</guid>
+		<description>When i studied your emulator, i found something (may be an error)
+m_CyclesThisUpdate += 8 ;
+instead of + 16
+see below
+
+// shift right. bit 0 into carry
+void Emulator::CPU_SRL_MEMORY(WORD address)
+{
+	//WHEN EDITING THIS FUNCTION ALSO EDIT CPU_SRL
+
+	m_CyclesThisUpdate += 8 ;
+
+"should be increased by 16 no ?
+...
+}</description>
+		<content:encoded><![CDATA[<p>When i studied your emulator, i found something (may be an error)<br />
+m_CyclesThisUpdate += 8 ;<br />
+instead of + 16<br />
+see below</p>
+<p>// shift right. bit 0 into carry<br />
+void Emulator::CPU_SRL_MEMORY(WORD address)<br />
+{<br />
+	//WHEN EDITING THIS FUNCTION ALSO EDIT CPU_SRL</p>
+<p>	m_CyclesThisUpdate += 8 ;</p>
+<p>&#8220;should be increased by 16 no ?<br />
+&#8230;<br />
+}</p>
+]]></content:encoded>
+	</item>
+</channel>
+</rss>

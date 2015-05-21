@@ -1,0 +1,160 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<!-- Mirrored from www.codeslinger.co.uk/pages/projects/gameboy/memory.html by HTTrack Website Copier/3.x [XR&CO'2010], Thu, 11 Aug 2011 17:34:16 GMT -->
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="description" content="_Emulation Programming_" />
+<meta name="keywords" content="_Emulation,Chip8,Gameboy,NES,SNES,Genesis,Master,System,Mega,Drive_" />
+<meta name="author" content="CodeSlinger /" />
+<link rel="stylesheet" type="text/css" href="../../../css.css" media="screen,projection" title="CodeSlinger (screen)" />
+<link rel="stylesheet" type="text/css" href="../../../print.css" media="print" />
+<title>codeslinger.co.uk</title>
+</head>
+
+<body>
+<div>
+<br><br>
+</div>
+
+<div id="container">
+<div id="logo">
+<h1><a href="../../../index-2.html">codeslinger.co.uk</a></h1>
+</div>
+
+<div id="navitabs">
+<h2 class="hide">Site menu:</h2>
+<a class="navitab" href="../../../index-3.html">Home</a><span class="hide"> | </span>
+<a class="navitab" href="../../basics.html">Basics</a><span class="hide"> | </span>
+<a class="navitab" href="../zuko.html">Zuko</a><span class="hide"> | </span>
+<a class="navitab" href="../megadrive.html">Mega Drive/Genesis</a><span class="hide"> | </span>
+<a class="navitab" href="../mastersystem.html">Master System</a><span class="hide"> | </span>
+<a class="activenavitab" href="../gameboy.html">Gameboy</a><span class="hide"> | </span>
+<a class="navitab" href="../chip8.html">Chip8</a><span class="hide"> | </span>
+<a class="navitab" href="../../blog/index.html">Blog</a><span class="hide"> | </span>
+</div>
+	
+<div id="desc">
+<h2>codeslinger.co.uk</h2>
+<p> Gameboy - Memory Control and Map.</p>
+
+</div>
+
+<div id="main">
+
+<h3><b>Memory Map:</b></h3>
+<p>
+
+Taken from nocash-s pandocs we have the following memory map:
+
+<p class="block"> 
+  0000-3FFF   16KB ROM Bank 00     (in cartridge, fixed at bank 00)<br>
+  4000-7FFF   16KB ROM Bank 01..NN (in cartridge, switchable bank number)<br>
+  8000-9FFF   8KB Video RAM (VRAM) (switchable bank 0-1 in CGB Mode)<br>
+  A000-BFFF   8KB External RAM     (in cartridge, switchable bank, if any)<br>
+  C000-CFFF   4KB Work RAM Bank 0 (WRAM)<br>
+  D000-DFFF   4KB Work RAM Bank 1 (WRAM)  (switchable bank 1-7 in CGB Mode)<br>
+  E000-FDFF   Same as C000-DDFF (ECHO)    (typically not used)<br>
+  FE00-FE9F   Sprite Attribute Table (OAM)<br>
+  FEA0-FEFF   Not Usable<br>
+  FF00-FF7F   I/O Ports<br>
+  FF80-FFFE   High RAM (HRAM)<br>
+  FFFF        Interrupt Enable Register
+</p>
+
+As explained earlier the internal memory only has room for 0x8000 (0x0000 - 0x7FFF) of the game memory. However most games are bigger in size than 0x8000 which is why memory banking is needed.
+
+The first 0x4000 bytes is where the first 0x4000 (0000-0x3FFF) (Rom bank 0) bytes of the game memory is placed. The second 0x4000 (0x4000 - 0x7FFF) is also for the game memory however this area
+is the rom bank area so depending on the current state of the game this memory area will contain different game memory banks. Banking is discussed in much more detail in the <a href="Banking-2.html">Rom and Ram Banking</a>
+section. Memory area 0xA000-0xBFFF is also for banking but this time it's ram banking. Once again I'll discuss this is more detail in the next section. The ECHO memory region (0xE000-0xFDFF)
+is quite different because any data written here is also written in the equivelent ram memory region 0xC000-0xDDFF. Hence why it is called echo. You maybe wondering if writing to RAM memory also writes
+its data to the ECHO memory. The answer is I dont know. I'd imagine that it did however whenever I emulated this it never worked correctly so I took it out and have never had any problems.
+
+The HRAM is where the stack stores its data. The stack pointer starts at 0xFFFE and works its way down in memory whenever something is pushed onto the stack.<br><br>
+
+I will discuss the rest of the regions as needed in the following sections.
+
+
+</p>
+
+<h3><b>Memory Control:</b> </h3>
+<p>
+Now we have a breakdown of the internal memory it becomes quite obvious that read and write access to the memory needs to be well controlled. For instance the first 0x8000 bytes are read only so nothing should ever
+get written there. Also anything that gets written to ECHO memory needs to be reflected in work RAM. Also when reading from one of the banks it is important that it gets read from the correct bank. The best way to
+control read and write access to the memory is creating a ReadMemory function and a WriteMemory function. Whenever you read and write to memory you MUST use these two functions, this way you will be certain your memory
+access will be controlled correctly. The only exception to this is when you initialize Rom memory which was shown on the previous section <a href="hardware.html">Hardware</a>. Below is an example of how the WriteMemory
+will help you control memory access:
+
+<p class="code">
+
+void Emulator::WriteMemory(WORD address, BYTE data)<br>
+{<br>
+   // dont allow any writing to the read only memory<br>
+   if ( address < 0x8000 )<br>
+   { <br>
+   } <br><br>
+
+   // writing to ECHO ram also writes in RAM <br>
+   else if ( ( address >= 0xE000 ) && (address < 0xFE00) ) <br>
+   { <br>
+     m_Rom[address] = data ;<br>
+     WriteMemory(address-0x2000, data) ; <br>
+   } <br><br>
+
+   // this area is restricted<br>
+   else if ( ( address >= 0xFEA0 ) && (address < 0xFEFF) ) <br>
+   { <br>
+   } <br><br>
+
+   // no control needed over this area so write to memory<br>
+   else<br>
+   {<br>
+     m_Rom[address] = data ;<br>
+   }<br>
+}
+
+</p>
+
+This is a very simplified version of the WriteMemory function but it should give you a basic idea of the importance of it. This function will expand throughout the other sections. The ReadMemory is discussed in more detail in the next section
+<a href="Banking-2.html">Rom and Ram Banking</a>
+
+
+<br><br>
+</p>
+
+
+
+</div>
+
+<div id="sidebar">
+<h3>Gameboy Emulation:</h3>
+
+<p>
+<a class="sidelink" href="beginning.html">Getting Started</a><span class="hide"> | </span>
+<a class="sidelink" href="hardware.html">The Hardware</a><span class="hide"> | </span>
+<a class="sidelink" href="memory.html">Memory Control and Map</a><span class="hide"> | </span>
+<a class="sidelink" href="banking.html">ROM and RAM Banking</a><span class="hide"> | </span>
+<a class="sidelink" href="timers.html">The Timers</a><span class="hide"> | </span>
+<a class="sidelink" href="interupts.html">Interupts</a><span class="hide"> | </span>
+<a class="sidelink" href="lcd.html">LCD</a><span class="hide"> | </span>
+<a class="sidelink" href="dma.html">DMA Transfer</a><span class="hide"> | </span>
+<a class="sidelink" href="graphics.html">Graphic Emulation</a><span class="hide"> | </span>
+<a class="sidelink" href="joypad.html">Joypad Emulation</a><span class="hide"> | </span>
+<a class="sidelink" href="opcodes.html">Opcode Examples</a><span class="hide"> | </span>
+<a class="sidelink" href="finished.html">Finished Product</a><span class="hide"> | </span>
+
+</p>
+
+</div>
+    
+<div id="footer">
+Copyright © 2008 codeslinger.co.uk
+</div>
+
+</div>
+</body>
+
+<!-- Mirrored from www.codeslinger.co.uk/pages/projects/gameboy/memory.html by HTTrack Website Copier/3.x [XR&CO'2010], Thu, 11 Aug 2011 17:34:16 GMT -->
+</html>
+
+

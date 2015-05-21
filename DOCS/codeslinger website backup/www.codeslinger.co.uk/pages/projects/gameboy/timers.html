@@ -1,0 +1,311 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<!-- Mirrored from www.codeslinger.co.uk/pages/projects/gameboy/timers.html by HTTrack Website Copier/3.x [XR&CO'2010], Thu, 11 Aug 2011 17:34:17 GMT -->
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="description" content="_Emulation Programming_" />
+<meta name="keywords" content="_Emulation,Chip8,Gameboy,NES,SNES,Genesis,Master,System,Mega,Drive_" />
+<meta name="author" content="CodeSlinger /" />
+<link rel="stylesheet" type="text/css" href="../../../css.css" media="screen,projection" title="CodeSlinger (screen)" />
+<link rel="stylesheet" type="text/css" href="../../../print.css" media="print" />
+<title>codeslinger.co.uk</title>
+</head>
+
+<body>
+<div>
+<br><br>
+</div>
+
+<div id="container">
+<div id="logo">
+<h1><a href="../../../index-2.html">codeslinger.co.uk</a></h1>
+</div>
+
+<div id="navitabs">
+<h2 class="hide">Site menu:</h2>
+<a class="navitab" href="../../../index-3.html">Home</a><span class="hide"> | </span>
+<a class="navitab" href="../../basics.html">Basics</a><span class="hide"> | </span>
+<a class="navitab" href="../zuko.html">Zuko</a><span class="hide"> | </span>
+<a class="navitab" href="../megadrive.html">Mega Drive/Genesis</a><span class="hide"> | </span>
+<a class="navitab" href="../mastersystem.html">Master System</a><span class="hide"> | </span>
+<a class="activenavitab" href="../gameboy.html">Gameboy</a><span class="hide"> | </span>
+<a class="navitab" href="../chip8.html">Chip8</a><span class="hide"> | </span>
+<a class="navitab" href="../../blog/index.html">Blog</a><span class="hide"> | </span>
+</div>
+	
+<div id="desc">
+<h2>codeslinger.co.uk</h2>
+<p> Gameboy - The Timers.</p>
+
+</div>
+
+<div id="main">
+
+<h3><b>Timer Explanation:</b></h3>
+<p>
+
+This section should not be confused with the timing explained in the <a href="beginning.html">Getting Started</a>
+section. Those timers were about getting the speed of the emulation right and synchronizing the cpu with graphics. The gameboy
+has a timer in memory which counts up at a certain frequency and requests an interupt when it overflows. This is the timer this section is about.<br><br>
+
+The timer is located in memoy address 0xFF05 and will count up at a set frequency. The frequency it counts up at is set by the timer controller in
+memory address 0xFF07. Whenever the timer overflows (remember the memory elements are all unsigned bytes so overflowing means going greater than 255)
+it requests a timer interupt and then resets itself to the value of the timer modulator in memory address 0xFF06. This gives us the following definitions:
+
+<p class ="block">
+#define TIMA 0xFF05<br>
+#define TMA 0xFF06<br>
+#define TMC 0xFF07
+</p>
+
+</p>
+
+<h3><b>Emulating Time:</b></h3>
+<p>
+
+There are 4 frequencies the timer controller (TMA) can set the timer (TIMA) to count up at. These are:
+
+<p class="block">
+4096 Hz <br>
+262144 Hz <br>
+65536 Hz <br>
+16384 Hz
+</p>
+
+If we take the first one for example (4096Hz) this means that the timer should increment its value 4096 times a second. Which also
+means assuming that the timer modulator is always 0 (meaning whenever the timer overflows it will start counting from 0 again) then
+the timer would overflow 16 times a second (4096/256). This is important to monitor so we know our timer emulation is accurate
+and will be causing timer interupts at the correct rate (assuming the timer interupt is enabled which I'll discuss in the next chapter).
+So using frequency 4096 as an example how would we emulate this in code? Well fortunately for us we are already accurately emulating
+the CPU timing by keeping a running total of each opcode clock cycles we have executed this frame. As explained earlier the cpu clock
+speed runs at 4194304Hz so if we know the current timer frequency we can work out how many clock cycles need to of passed until we increment
+our timer register. Our formula will be the following:
+
+<p class = "code">
+#define CLOCKSPEED 4194304 ; <br>
+m_TimerCounter = CLOCKSPEED/frequency ; 
+</p>
+
+Where m_TimerCounter is an int. This should be set to 1024 at the start of game emulation (explained below)<br><br>
+
+So if the current frequency is 4096Hz then our timer counter will be 1024 (CLOCKSPEED/4096). This means that "for every 1024 clock cycles
+our cpu does our timer should increment itself once". However if our frequency was 16384 then our counter would be 256 (CLOCKSPEED/16384) which
+means "For every 256 clock cycles our cpu does our timer should increment itself once".<br><br>
+
+If you look at the main emulation update loop which is called 60 times a second (discussed in the <a href="beginning.html">Getting Started</a> section)
+you can see that I've already taken into account the timers with the UpdateTimers funcation and as you can see Im passing in the clock cycle for the
+last opcode.
+
+<p class="code"> 
+
+void Emulator::Update( )<br>
+{<br>
+  const int MAXCYCLES = 69905 ;<br>
+  int cyclesThisUpdate = 0 ; <br><br>
+
+  while (cyclesThisUpdate < MAXCYCLES)<br>
+  {<br>
+
+     int cycles = ExecuteNextOpcode( ) ; <br>
+     cyclesThisUpdate+=cycles ;<br>
+     UpdateTimers(cycles) ; <br>
+     UpdateGraphics(cycles) ; <br>
+     DoInterupts( ) ;<br>
+  }<br>
+
+RenderScreen( ) ;<br>
+}
+</p>
+
+This is how to implement the UpdateTimers function:
+
+<p class ="code">
+void Emulator::UpdateTimers( int cycles )<br>
+{<br>
+   DoDividerRegister(cycles); <br><br>
+   // the clock must be enabled to update the clock <br>
+   if (IsClockEnabled())<br>
+   { <br>
+     m_TimerCounter -= cycles ; <br><br>
+
+     // enough cpu clock cycles have happened to update the timer<br>
+     if (m_TimerCounter <= 0)<br>
+     {<br>
+
+       // reset m_TimerTracer to the correct value<br>
+       SetClockFreq( ) ;<br><br>
+
+       // timer about to overflow<br>
+       if (ReadMemory(TIMA) == 255)<br>
+       { <br>
+         WriteMemory(TIMA,ReadMemory(TMA)) ;<br>
+         RequestInterupt(2) ;<br>
+       }<br>
+       else<br>
+       {<br>
+         WriteMemory(TIMA, ReadMemory(TIMA)+1) ;<br>
+       }<br>
+     } <br>
+   }<br>
+}
+</p>
+The DoDividerRegister function and the IsClockEnabled() function will be implemented in a minute. The IsClockEnabled function basically it is a setting in the timer controller (TMC)
+which pauses or resumes the timer counting. If IsClockEnabled() returns false then the timer does not reset itself,
+neither does the timercounter but they both just pause until it is enabled again. SetClockFrequency will also be implemented in a minute.
+Its purpose will be to reset m_TimerCounter upon reaching zero to the correct value for the current clock frequency so it can start
+counting down at the correct rate again. The rest of the code just increments the current timer (TIMA) value and checks to see if it is about to overflow.
+If it does overflow then it resets the timer(TIMA) to the value in the timer modulator (TMA) and requests a timer interupt. The timer interupt is bit 2 of
+ther interupt request register which will be explained fully in the next chapter.
+
+</p>
+
+<h3><b>The Timer Controller:</b> </h3>
+<p>
+The timer controller (TMC) is a 3 bit register which controlls the timer (DUH!). Bit 1 and 0 combine together to specify which frequency
+the timer should increment at. This is the mapping:
+
+<p class="block">
+00: 4096 Hz <br>
+01: 262144 Hz <br>
+10: 65536 Hz <br>
+11: 16384 Hz
+</p>
+
+Bit 2 specifies whether the timer is enabled(1) or disabled(0). With this information we can write the IsClockEnabled() function like so:
+
+<p class="code">
+
+bool Emulator::IsClockEnabled() const <br>
+{<br>
+   return TestBit(ReadMemory(TMC),2)?true:false ;<br>
+}<br>
+
+</p>
+
+As stated earlier the frequency defaults to 4096Hz but we need to monitor a way of checking if it has changed. The easyest way to do this
+is by editing our WriteMemory function to detect if the game is trying to change the timer controller. If the game is changing the timer controller
+then we need to check if the current clock frequency is different to what the game is trying to change it to and if it is then we much reset the timer
+counter so it counts at the new frequency. This is simple to do by adding the folling code to the WriteMemory function:
+
+<p class="code">
+else if (TMC == address) <br>
+{<br>
+   BYTE currentfreq = GetClockFreq() ;<br>
+   m_GameMemory[TMC] = data ;<br>
+   BYTE newfreq = GetClockFreq();<br><br>
+
+   if (currentfreq != newfreq)<br>
+   {<br>
+     SetClockFreq();<br>
+   }<br>
+}
+</p>
+
+GetClockFreq and SetClockFreq are defined as follows:
+
+<p class="code">
+// remember the clock frequency is a combination of bit 1 and 0 of TMC<br>
+BYTE Emulator::GetClockFreq( )const<br>
+{<br>
+   return ReadMemory(TMC) & 0x3 ;<br>
+}<br><br>
+
+///////////////////////////////////////////<br><br>
+
+void Emulator::SetClockFreq()<br>
+{<br>
+   BYTE freq = GetClockFreq( ) ;<br>
+   switch (freq)<br>
+   {<br>
+     case 0: m_TimerCounter = 1024 ; break ; // freq 4096<br>
+     case 1: m_TimerCounter = 16 ; break ;// freq 262144<br>
+     case 2: m_TimerCounter = 64 ; break ;// freq 65536<br>
+     case 3: m_TimerCounter = 256 ; break ;// freq 16382<br>
+   }<br>
+}
+
+</p>
+
+As stated earlier the m_TimerCounter is set to the value of CLOCKSPEED/frequency.
+
+</p>
+
+<h3><b>Divider Register:</b> </h3>
+<p>
+
+The final timing related area that needs emulating is the Divider Register. It works very similar to the timers which is why
+I have included it in this section aswell as put the code to emulate it inside the UpdateTimers function. The way it works is it
+continually counts up from 0 to 255 and then when it overflows it starts from 0 again. It does not cause an interupt when it overflows
+and it cannot be paused like the timers. It counts up at a frequency of 16382 which means every 256 CPU clock cycles the divider register
+needs to increment. We need another int counter like m_TimerCounter to keep track of when it needs to increment, this is called m_DividerCounter
+which initially is set to 0 and constantly increments to 255 then starts again.
+The Divider Register is found at register address 0xFF04. The DoDividerRegister function called in UpdateTimers is emulated like so:
+
+<p class = "code">
+
+void Emulator::DoDividerRegister(int cycles)<br>
+{<br>
+   m_DividerRegister+=cycles; <br>
+   if (m_DividerCounter >= 255)<br>
+   { <br>
+     m_DividerCounter = 0 ; <br>
+     m_Rom[0xFF04]++ ; <br>
+   }<br>
+}
+
+</p>
+
+You may be wondering why I am incrementing the divider register directly and not using WriteMemory. The answer is
+that the gameboy hardware does not allow writing to the divider register and when ever the game tries to do so it resets
+the divider register to 0. We need to implement this functionality ourselves in our WriteMemory function. This is why we
+cannot use this function to increment the divider register because it would always reset it to 0! Speaking of which
+we need to edit our write memory function to trap the divider register.
+
+<p class="code">
+//trap the divider register<br>
+else if (0xFF04 == address)<br>
+   m_Rom[0xFF04] = 0 ;
+</p>
+
+Thats everything related to timers. Head over to the next section on <a href="interupts.html">Interupts</a>
+
+<br><br>
+</p>
+
+
+
+</div>
+
+<div id="sidebar">
+<h3>Gameboy Emulation:</h3>
+
+<p>
+<a class="sidelink" href="beginning.html">Getting Started</a><span class="hide"> | </span>
+<a class="sidelink" href="hardware.html">The Hardware</a><span class="hide"> | </span>
+<a class="sidelink" href="memory.html">Memory Control and Map</a><span class="hide"> | </span>
+<a class="sidelink" href="banking.html">ROM and RAM Banking</a><span class="hide"> | </span>
+<a class="sidelink" href="timers.html">The Timers</a><span class="hide"> | </span>
+<a class="sidelink" href="interupts.html">Interupts</a><span class="hide"> | </span>
+<a class="sidelink" href="lcd.html">LCD</a><span class="hide"> | </span>
+<a class="sidelink" href="dma.html">DMA Transfer</a><span class="hide"> | </span>
+<a class="sidelink" href="graphics.html">Graphic Emulation</a><span class="hide"> | </span>
+<a class="sidelink" href="joypad.html">Joypad Emulation</a><span class="hide"> | </span>
+<a class="sidelink" href="opcodes.html">Opcode Examples</a><span class="hide"> | </span>
+<a class="sidelink" href="finished.html">Finished Product</a><span class="hide"> | </span>
+
+</p>
+
+</div>
+    
+<div id="footer">
+Copyright © 2008 codeslinger.co.uk
+</div>
+
+</div>
+</body>
+
+<!-- Mirrored from www.codeslinger.co.uk/pages/projects/gameboy/timers.html by HTTrack Website Copier/3.x [XR&CO'2010], Thu, 11 Aug 2011 17:34:17 GMT -->
+</html>
+
+

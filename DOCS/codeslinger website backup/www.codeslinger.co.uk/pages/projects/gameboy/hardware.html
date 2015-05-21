@@ -1,0 +1,258 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<!-- Mirrored from www.codeslinger.co.uk/pages/projects/gameboy/hardware.html by HTTrack Website Copier/3.x [XR&CO'2010], Thu, 11 Aug 2011 17:34:16 GMT -->
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="description" content="_Emulation Programming_" />
+<meta name="keywords" content="_Emulation,Chip8,Gameboy,NES,SNES,Genesis,Master,System,Mega,Drive_" />
+<meta name="author" content="CodeSlinger /" />
+<link rel="stylesheet" type="text/css" href="../../../css.css" media="screen,projection" title="CodeSlinger (screen)" />
+<link rel="stylesheet" type="text/css" href="../../../print.css" media="print" />
+<title>codeslinger.co.uk</title>
+</head>
+
+<body>
+<div>
+<br><br>
+</div>
+
+<div id="container">
+<div id="logo">
+<h1><a href="../../../index-2.html">codeslinger.co.uk</a></h1>
+</div>
+
+<div id="navitabs">
+<h2 class="hide">Site menu:</h2>
+<a class="navitab" href="../../../index-3.html">Home</a><span class="hide"> | </span>
+<a class="navitab" href="../../basics.html">Basics</a><span class="hide"> | </span>
+<a class="navitab" href="../zuko.html">Zuko</a><span class="hide"> | </span>
+<a class="navitab" href="../megadrive.html">Mega Drive/Genesis</a><span class="hide"> | </span>
+<a class="navitab" href="../mastersystem.html">Master System</a><span class="hide"> | </span>
+<a class="activenavitab" href="../gameboy.html">Gameboy</a><span class="hide"> | </span>
+<a class="navitab" href="../chip8.html">Chip8</a><span class="hide"> | </span>
+<a class="navitab" href="../../blog/index.html">Blog</a><span class="hide"> | </span>
+</div>
+	
+<div id="desc">
+<h2>codeslinger.co.uk</h2>
+<p> Gameboy - Hardware.</p>
+
+</div>
+
+<div id="main">
+
+<h3><b>General Info:</b></h3>
+<p>
+
+All of the info below was taken straight from <a href="http://nocash.emubase.de/pandocs.htm#gameboytechnicaldata">nocashs pan-docs</a>.
+
+<p class="block"> 
+CPU: 8-bit (similar to the z80 processor)<br>
+Clock-Speed: 4.194304MHz<br>
+Screen Resolution: 160x144<br>
+Vertical Sync: 59.73Hz<br>
+Internal Memory size: 0x10000
+</p>
+
+The CPU is very similar to the z80 processor (there are a couple of added instructions and not all flags are used).
+All the instructions can be found on the <a href="files/GB.pdf">Gameboy pdf</a> file im hosting aswell as an explanation
+for each and the amount of clock cycles the instruction takes to execute. <br>
+I have explained how to emulate the clock speed for accurate timing aswell as the vertical refresh rate in the <a href="beginning.html">Getting Started</a>
+section of this site. The screen resolution is quite interesting to emulate. The way I did it was to use a 3D array. The first part is the screen x axis. The second is
+the y axis and the third is the colour (three elements for red, green and blue). This gives the following declaration:
+
+<p class="code">
+BYTE m_ScreenData[160][144][3] ;
+</p>
+
+So if I wanted to set the very middle pixel of the screen to red I would do the following:
+
+<p class="code">
+
+m_ScreenData[160/2][144/2][0] = 0xFF ;<br>
+m_ScreenData[160/2][144/2][1] = 0 ; <br>
+m_ScreenData[160/2][144/2][2] = 0 ; <br>
+</p>
+
+If you dont understand why the values 0xFF,0,0 gives red then youu should google about RGB hex colours. 
+
+The cpu is 8-bit and the memory is 0x10000 bytes in size. So this will give the declaration of the main memory:
+<p class="code">
+BYTE m_Rom[0x10000] ;
+</p>
+
+I will discuss the internal memory in much more detail in the section called <a href="memory.html">Memory Control and Map</a>
+
+</p>
+
+<h3><b>The Registers:</b> </h3>
+<p>
+The gameboy has 8 registers named A,B,C,D,E,F,H,L each are 8-Bits in size. However these registers are often paired to form 4 16-Bit registers.
+The pairings are AF, BC, DE, HL. AF is less frequently used then the others because A is the accumulator and F is the flag register so working with them
+as a pair is less frequent than the others. HL is used very frequently mainly for referring to game memory.<br><br>
+
+There are many ways to emulate the registers in code. One of the ways is to represent each of the register pairs with a word variable and supply a function
+for retrieving the hi and lo bytes for the individual registers. Another way is the opposite and have 8 byte variables for each register and then supply a function
+to combine these to form a word to represent the pairings. However I prefer to use unions to emulate the registers like so:
+
+<p class = "code">
+
+union Register<br>
+{<br>
+  WORD reg ; <br>
+  struct <br>
+  {<br>
+   BYTE lo ;<br>
+   BYTE hi ;<br>
+  };<br>
+};<br><br>
+
+Register m_RegisterAF ;<br>
+Register m_RegisterBC ; <br>
+Register m_RegisterDE ; <br>
+Register m_RegisterHL ; <br>
+
+</p>
+
+Each field in a union occupies the same region in memory. So if you did m_RegisterAF.reg = 0xAABB then m_RegisterAF.hi would equal 0xAA and m_RegisterAF.lo would equal 0xBB.
+You could then do m_RegisterAF.lo = 0xCC and m_RegisterAF.hi would still be 0xAA but m_RegisterAF.reg would be 0xAACC. This is perfect for representing the registers because
+it gives easy access to the individual registers (with hi and lo fields) and also as a pair (with reg field). You may be wondering why BYTE lo is declared before BYTE hi. This
+is due to the <a href="http://en.wikipedia.org/wiki/Endianness">endianess</a>.
+
+</p>
+
+<h3><b>The Flags:</b> </h3>
+<p>
+As previously stated the F register doubles as the flag register. There are 4 flags the cpu uses (opposed to the real z80 which I believe has 8) called "the carry flag", "the half carry flag",
+"the subtract flag" and "the zero flag". The carry flag gets set after a mathematical instruction which resulted in a value that cannot fit within the range of the data type. For example if the instruction
+was to set register A to the value of 250 + 7 then A would be set to 257. However as register A is an unsigned byte it can only store values between 0 and 255. Which means A would wrap around on itself and become
+1 and the carry flag would be set to show the result overflowed. <br>
+The half carry flag is similar to the carry flag except it is set when a mathematical instruction overflow from the lower nibble to the upper nibble (or
+with 16 bit operations the lower byte to the upper byte). This flag is set by many instructions but is only used with the DAA instruction<br>
+The zero flag is set when a mathematical instruction results to 0. I.E. 4-4.<br>
+The Subtract flag is set when a mathematical operation is a subtraction. This is also only used with the DAA instrction.<br><br>
+
+I use the following definitions when referring to the flags:
+
+<p class="block">
+#define FLAG_Z 7<br>
+#define FLAG_N 6<br>
+#define FLAG_H 5<br>
+#define FLAG_C 4<br>
+</p>
+
+Each value is the bit in the F register for that flag.
+
+</p>
+
+<h3><b>Program Counter and Stack Pointer:</b> </h3>
+<p>
+The program counter is the address of the next opcode in memory to execute. Some opcodes require the next one or two bytes in memory to use as arguments. When this is
+the case the program counter needs to skip these to point to the next actual opcode. The gameboy memory is 0x10000 bytes in size which means it has a range of 0 to 0xFFFF.
+This is also the same range as an unsigned word data type which is perfect for representing the program counter. The program counter will change its value from jump instructions
+along with call instructions and the execution of interupts. The program counter is initialized to 0x100<br><br>
+
+The stack is a place in memory where data gets loaded in to. The last piece of data put onto the stack will be the first retrieved from the stack. The stack pointer points to the
+very top of the stack in memory, in other words the area of memory where the next piece of data to be added to the stack would occupy. Like the program counter the stack pointer
+points to address is memory so a WORD data type would also represent the stack pointer well. However some of the opcodes use the hi and lo bytes of the stack pointer so it would
+be easier to emulate the stack pointer the same way we do the registers. The stack pointer is initialized to 0xFFFE.<br><br>
+
+The above information gives us the following declarations:
+<p class="block">
+WORD m_ProgramCouner ;<br>
+Regiser m_StackPointer<br>
+</p>
+
+</p>
+
+<h3><b>Initializing:</b> </h3>
+<p>
+
+The following information is also found in <a href="http://nocash.emubase.de/pandocs.htm#powerupsequence">nocashs-pan-docs</a> When the emulator
+starts it must set the state of the registers, stackpointer, program counter and the special rom registers to the following:
+
+<p class="code">
+m_ProgramCounter=0x100 ; <br>
+m_RegisterAF=0x01B0; <br>
+m_RegisterBC=0x0013; <br>
+m_RegisterDE=0x00D8;<br>
+m_RegisterHL=0x014D;<br>
+m_StackPointer=0xFFFE;<br>
+m_Rom[0xFF05] = 0x00   ; <br>
+m_Rom[0xFF06] = 0x00   ; <br>
+m_Rom[0xFF07] = 0x00   ; <br>
+m_Rom[0xFF10] = 0x80   ; <br>
+m_Rom[0xFF11] = 0xBF   ; <br>
+m_Rom[0xFF12] = 0xF3   ; <br>
+m_Rom[0xFF14] = 0xBF   ; <br>
+m_Rom[0xFF16] = 0x3F   ; <br>
+m_Rom[0xFF17] = 0x00   ; <br>
+m_Rom[0xFF19] = 0xBF   ; <br>
+m_Rom[0xFF1A] = 0x7F   ; <br>
+m_Rom[0xFF1B] = 0xFF   ; <br>
+m_Rom[0xFF1C] = 0x9F   ; <br>
+m_Rom[0xFF1E] = 0xBF   ; <br>
+m_Rom[0xFF20] = 0xFF   ; <br>
+m_Rom[0xFF21] = 0x00   ; <br>
+m_Rom[0xFF22] = 0x00   ; <br>
+m_Rom[0xFF23] = 0xBF   ; <br>
+m_Rom[0xFF24] = 0x77   ; <br>
+m_Rom[0xFF25] = 0xF3   ;<br>
+m_Rom[0xFF26] = 0xF1	 ; <br>
+m_Rom[0xFF40] = 0x91   ; <br>
+m_Rom[0xFF42] = 0x00   ; <br>
+m_Rom[0xFF43] = 0x00   ; <br>
+m_Rom[0xFF45] = 0x00   ; <br>
+m_Rom[0xFF47] = 0xFC   ; <br>
+m_Rom[0xFF48] = 0xFF   ; <br>
+m_Rom[0xFF49] = 0xFF   ; <br>
+m_Rom[0xFF4A] = 0x00   ; <br>
+m_Rom[0xFF4B] = 0x00   ; <br>
+m_Rom[0xFFFF] = 0x00   ; <br>
+</p>
+
+The other m_Rom elements are set to random values inside the original gameboy but I personally set them all to 0.
+
+
+
+
+<br><br>
+</p>
+
+
+
+</div>
+
+<div id="sidebar">
+<h3>Gameboy Emulation:</h3>
+
+<p>
+<a class="sidelink" href="beginning.html">Getting Started</a><span class="hide"> | </span>
+<a class="sidelink" href="hardware.html">The Hardware</a><span class="hide"> | </span>
+<a class="sidelink" href="memory.html">Memory Control and Map</a><span class="hide"> | </span>
+<a class="sidelink" href="banking.html">ROM and RAM Banking</a><span class="hide"> | </span>
+<a class="sidelink" href="timers.html">The Timers</a><span class="hide"> | </span>
+<a class="sidelink" href="interupts.html">Interupts</a><span class="hide"> | </span>
+<a class="sidelink" href="lcd.html">LCD</a><span class="hide"> | </span>
+<a class="sidelink" href="dma.html">DMA Transfer</a><span class="hide"> | </span>
+<a class="sidelink" href="graphics.html">Graphic Emulation</a><span class="hide"> | </span>
+<a class="sidelink" href="joypad.html">Joypad Emulation</a><span class="hide"> | </span>
+<a class="sidelink" href="opcodes.html">Opcode Examples</a><span class="hide"> | </span>
+<a class="sidelink" href="finished.html">Finished Product</a><span class="hide"> | </span>
+
+</p>
+
+</div>
+    
+<div id="footer">
+Copyright © 2008 codeslinger.co.uk
+</div>
+
+</div>
+</body>
+
+<!-- Mirrored from www.codeslinger.co.uk/pages/projects/gameboy/hardware.html by HTTrack Website Copier/3.x [XR&CO'2010], Thu, 11 Aug 2011 17:34:16 GMT -->
+</html>
+
+

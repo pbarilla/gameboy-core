@@ -1,0 +1,211 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" dir="ltr">
+
+<head profile="http://gmpg.org/xfn/11">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+<title>Emulator Development  </title>
+
+<link rel="stylesheet" href="wp-content/themes/default/style.css" type="text/css" media="screen" />
+<link rel="alternate" type="application/rss+xml" title="Emulator Development RSS Feed" href="indexd784.html?feed=rss2" />
+<link rel="pingback" href="xmlrpc.html" />
+
+<style type="text/css" media="screen">
+
+	#page { background: url("wp-content/themes/default/images/kubrickbgwide.jpg") repeat-y top; border: none; }
+
+</style>
+
+<link rel="EditURI" type="application/rsd+xml" title="RSD" href="xmlrpc0db0.php?rsd" />
+<link rel="wlwmanifest" type="application/wlwmanifest+xml" href="wp-includes/wlwmanifest.xml" /> 
+<meta name="generator" content="WordPress 2.5.1" />
+
+</head>
+<body>
+<div id="page">
+
+
+<div id="header">
+	<div id="headerimg">
+		<h1><a href="index.html">Emulator Development</a></h1>
+		<div class="description">The art of emulator programming</div>
+	</div>
+</div>
+<hr />
+
+	<div id="content" class="narrowcolumn">
+
+	
+		
+			<div class="post" id="post-7">
+				<h2><a href="indexc4f7.html?p=7" rel="bookmark" title="Permanent Link to Quick Emulator Update">Quick Emulator Update</a></h2>
+				<small>July 18th, 2008 <!-- by codeslinger --></small>
+
+				<div class="entry">
+					<p>So far my emulator has the following working:</p>
+<ul>
+<li>Timers</li>
+<li>Divider</li>
+<li>LCD Status</li>
+<li>Interupt Handling</li>
+</ul>
+<p>I&#8217;ve yet to post on how to emulate the LCD Status (moderate difficulty) and Interupt Handling (easy). Hopefully I&#8217;ll get time to write a detailed post on this later on today.</p>
+<p>So far my emulator is dumping the following information when running every second:</p>
+<blockquote><p>
+There has been: 4194304 clock cycles<br />
+There has been: 60 vblanks<br />
+There has been: 16 timer interupts<br />
+There has been: 64 divider overflows
+</p></blockquote>
+<p>The timer is set to a frequency of 4096Hz and the TMA is set to 0. So far everything seems to be working perfectly. Just input and graphic emulation until I start work on the opcode emulation. I always prefer writing the hardware emulation before the opcode emulation because in my opinion it is the harder of the two. So I like to get it right before moving on.</p>
+				</div>
+
+				<p class="postmetadata"> Posted in <a href="index81ea.html?cat=3" title="View all posts in Gameboy" rel="category">Gameboy</a> |   <a href="indexc4f7.html?p=7#comments" title="Comment on Quick Emulator Update">1 Comment &#187;</a></p>
+			</div>
+
+		
+			<div class="post" id="post-6">
+				<h2><a href="index42dc.html?p=6" rel="bookmark" title="Permanent Link to Divider Register">Divider Register</a></h2>
+				<small>July 16th, 2008 <!-- by codeslinger --></small>
+
+				<div class="entry">
+					<p>This is very similar to the Timer register (TIMA) only much easier. The divider register (DIV) is located at memory address 0xFF04 and one of its uses is to supply a seed for a random number generator in games. You can test this by not emulating the divider register and then playing tetris. You will notice that the only object you are given in tetris is the square block which makes the game a bit easy. The register increments itself through values of 0-255 and starts back at 0 again when going one higher than 255. You need to intercept the write to the DIV address. When the game attempts to write to DIV then DIV is set to 0.</p>
+<p>So how do we emulate this? We need to set up a divider tracer variable which increments the div register at 16384Hz. The clock speed is 4.194304MHz which is 256 times faster than the divider register. So each timer the cpu does 256 clock cycles the div register gets incremented.</p>
+<p>This gives the following emulation code needed to implement the divider register:</p>
+<p>click <a href="examples/divider.txt">here</a> for a text version of the divider example. As usual feel free to comment on any questions you have or any problems you see with the code.</p>
+				</div>
+
+				<p class="postmetadata"> Posted in <a href="index81ea.html?cat=3" title="View all posts in Gameboy" rel="category">Gameboy</a> |   <a href="index42dc.html?p=6#respond" title="Comment on Divider Register">No Comments &#187;</a></p>
+			</div>
+
+		
+			<div class="post" id="post-4">
+				<h2><a href="index5c7e.html?p=4" rel="bookmark" title="Permanent Link to Gameboy Timing and Timers">Gameboy Timing and Timers</a></h2>
+				<small>July 16th, 2008 <!-- by codeslinger --></small>
+
+				<div class="entry">
+					<p>One of the most important parts of emulator development is the timing emulation. If you get the timing wrong then you will suffer from very low compatibility.</p>
+<p>This is the information I have about gameboy timing:</p>
+<p>Processor Speed: 1048576Hz (PROCESSORSPEED)</p>
+<p>Clock Speed: 4194304Hz (CLOCKSPEED)</p>
+<p>It has one timer located at memory address 0xFF05 (TIMA) which counts up at a set frequency. The frequency is dictated by combining bits 1 and 0 of memory address 0xFF07 (TAC) which is the timer control register. Bit 2 of TAC is responsible for stopping and starting the timer (TIMA).</p>
+<p>As previously stated combining bit 1 and 0 of TAC specifies the TIMA frequency. These are the frequencies:</p>
+<p>00:   4096 Hz</p>
+<p>01: 262144 Hz</p>
+<p>10:  65536 Hz</p>
+<p>11:  16384 Hz</p>
+<p>As the TIMA is an unsigned byte it can only count between values of 0 and 255. So when it goes higher than 255 it sets its value to the value stored in the register 0xFF06(TMA) and requests the timer interupt. </p>
+<p>All the above information needs to be successfully emulated to give high compatibility. This is how Im going coding it.</p>
+<p>I have set my emulator to have a frames per second (FPS) count of 60. This means I must execute <strong>CLOCKSPEED / FPS</strong> number of instruction cycles every 60th of a second. This will give me 4194304Hz of clock cycles every second.</p>
+<p>Thats the gameboy timing emulated but what about the gameboy timer? If we take frequency 4096Hz this means the timer increments its value 4096 times a second. As the timer counts between 0 and 255 it must overflow 16 times a second (4096/256). This is handy to know so we can check it is counting at the correct frequency. However how do we know when we need to increment the timer? The clockspeed is 4194304Hz and the frequency is 4096Hz. This means that roughly every 1024 clock cycles the timer increments by 1. So if we have a variable for timer counting (m_TimerTracer) that is initially set to 1024 and each timer we execute an opcode we decrease this variable by the amount of clock cycles the opcode took to execute then when this variable is less than or equal to 0 it is time to incrememt the timer. Of course we only do all of this if bit 2 of TAC is set to 1 (meaning the timer is enabled). This is fine for frequency 4096 but what about the other 3 frequencies? Well whenever the game changes TAC register bits 1 and 0 then m_TimerTracer gets reset to CLOCKSPEED/FREQUENCY. So whenever the game writes to address TAC we need to check that the current frequency is different to the new frequency and if so we change m_TimerTracer to CLOCKSPEED/FREQUENCY.</p>
+<p>Putting all of the above information together gives the following emulation code:</p>
+<p>Click <a href="examples/timer.txt">here</a> for a txt version of the code. This code here only shows how to emulate the parts discussed in this post. If you have any questions or comments then please feel free to post below.</p>
+				</div>
+
+				<p class="postmetadata"> Posted in <a href="index81ea.html?cat=3" title="View all posts in Gameboy" rel="category">Gameboy</a> |   <a href="index5c7e.html?p=4#comments" title="Comment on Gameboy Timing and Timers">1 Comment &#187;</a></p>
+			</div>
+
+		
+			<div class="post" id="post-3">
+				<h2><a href="index2207.html?p=3" rel="bookmark" title="Permanent Link to Starting afresh">Starting afresh</a></h2>
+				<small>July 11th, 2008 <!-- by admin --></small>
+
+				<div class="entry">
+					<p>This is the first post in what I hope to be many on emulation programming. My current gameboy emulator has approximately 50% game compatibility which is not great and for the life of me I cant seem to find what Im doing wrong. So i&#8217;ve decided im going to start again but this time Im going to use this fancy new blog to track my progress. The idea behind this post is to show how Im going about programming my emulator and the problems Im encountering plus the solutions to previous problems in hope that it might help someone else new to the scene. Plus I think it will be nice to look back on in a few years time to see how far I&#8217;ve come. Visit my website <a href="../../../../www.codeslinger.co.uk/index.html">http://codeslinger.co.uk</a> for more information on emulator programming.</p>
+				</div>
+
+				<p class="postmetadata"> Posted in <a href="indexb31a.html?cat=1" title="View all posts in Uncategorized" rel="category">Uncategorized</a> |   <a href="index2207.html?p=3#respond" title="Comment on Starting afresh">No Comments &#187;</a></p>
+			</div>
+
+		
+		<div class="navigation">
+			<div class="alignleft"></div>
+			<div class="alignright"><a href="index6146.html?paged=2">Newer Entries &raquo;</a></div>
+		</div>
+
+	
+	</div>
+
+	<div id="sidebar">
+		<ul>
+						<li>
+				<form method="get" id="searchform" action="http://codeslinger.co.uk/pages/blog/wordpress/">
+<div><input type="text" value="" name="s" id="s" />
+<input type="submit" id="searchsubmit" value="Search" />
+</div>
+</form>
+			</li>
+
+			<!-- Author information is disabled per default. Uncomment and fill in your details if you want to use it.
+			<li><h2>Author</h2>
+			<p>A little something about you, the author. Nothing lengthy, just an overview.</p>
+			</li>
+			-->
+
+			 <li>
+
+						<p>You are currently browsing the <a href="index.html">Emulator Development</a> blog archives.</p>
+
+			
+			</li> 
+			
+			<li><h2>Archives</h2>
+				<ul>
+					<li><a href='indexd189.html?m=201005' title='May 2010'>May 2010</a></li>
+	<li><a href='indexc36d.html?m=200905' title='May 2009'>May 2009</a></li>
+	<li><a href='index17e8.html?m=200904' title='April 2009'>April 2009</a></li>
+	<li><a href='index10a5.html?m=200903' title='March 2009'>March 2009</a></li>
+	<li><a href='index8988.html?m=200902' title='February 2009'>February 2009</a></li>
+	<li><a href='index7866.html?m=200812' title='December 2008'>December 2008</a></li>
+	<li><a href='index55f6.html?m=200811' title='November 2008'>November 2008</a></li>
+	<li><a href='indexa7bc.html?m=200810' title='October 2008'>October 2008</a></li>
+	<li><a href='indexe77c.html?m=200809' title='September 2008'>September 2008</a></li>
+	<li><a href='indexcffc.html?m=200808' title='August 2008'>August 2008</a></li>
+	<li><a href='index0e62.html?m=200807' title='July 2008'>July 2008</a></li>
+				</ul>
+			</li>
+
+			<li class="categories"><h2>Categories</h2><ul>	<li class="cat-item cat-item-3"><a href="index81ea.html?cat=3" title="View all posts filed under Gameboy">Gameboy</a> (6)
+</li>
+	<li class="cat-item cat-item-4"><a href="indexaa1e.html?cat=4" title="View all posts filed under Sega Master System">Sega Master System</a> (13)
+</li>
+	<li class="cat-item cat-item-1"><a href="indexb31a.html?cat=1" title="View all posts filed under Uncategorized">Uncategorized</a> (4)
+</li>
+	<li class="cat-item cat-item-5"><a href="indexb946.html?cat=5" title="View all posts filed under Zuko">Zuko</a> (1)
+</li>
+</ul></li>
+							
+				<li><h2>Meta</h2>
+				<ul>
+										<li><a href="wp-login.html">Log in</a></li>
+					<li><a href="http://validator.w3.org/check/referer" title="This page validates as XHTML 1.0 Transitional">Valid <abbr title="eXtensible HyperText Markup Language">XHTML</abbr></a></li>
+					<li><a href="http://gmpg.org/xfn/"><abbr title="XHTML Friends Network">XFN</abbr></a></li>
+					<li><a href="http://wordpress.org/" title="Powered by WordPress, state-of-the-art semantic personal publishing platform.">WordPress</a></li>
+									</ul>
+				</li>
+			
+					</ul>
+	</div>
+
+
+
+<hr />
+<div id="footer">
+<!-- If you'd like to support WordPress, having the "powered by" link somewhere on your blog is the best way; it's our only promotion or advertising. -->
+	<p>
+		Emulator Development is proudly powered by
+		<a href="http://wordpress.org/">WordPress</a>
+		<br /><a href="indexd784.html?feed=rss2">Entries (RSS)</a>
+		and <a href="indexa6da.html?feed=comments-rss2">Comments (RSS)</a>.
+		<!-- 23 queries. 0.396 seconds. -->
+	</p>
+</div>
+</div>
+
+<!-- Gorgeous design by Michael Heilemann - http://binarybonsai.com/kubrick/ -->
+
+		</body>
+
+<!-- Mirrored from codeslinger.co.uk/pages/blog/wordpress/?paged=3 by HTTrack Website Copier/3.x [XR&CO'2010], Thu, 11 Aug 2011 17:35:19 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8"><!-- /Added by HTTrack -->
+</html>

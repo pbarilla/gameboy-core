@@ -1,0 +1,141 @@
+void TMS9918A::RenderSpritesMode4( )
+{
+	int vCounter = m_VCounter ;
+	int spriteCount = 0;
+	WORD satbase = GetSATBase();
+
+	bool is8x16 = false ;
+	bool isZoomed = false;
+	int size = 8 ;		
+
+	bool shiftX = IsRegBitSet(0,3) ;
+	bool useSecondPattern = IsRegBitSet(6,2) ;
+
+	// is it 8x16 sprite?
+	if (IsRegBitSet(1,1))
+	{
+		is8x16 = true;
+		size = 16;
+	}
+
+	// is the sprite zoomed?
+	if (IsRegBitSet(1,0))
+	{
+		isZoomed = true;
+		size = 16;
+	}
+
+	// loop through all 64 sprites and see which fall within range of the current scanline
+	for (int sprite = 0; sprite < 64; sprite++)
+	{
+		int y = m_VRAM[satbase+sprite] ;
+
+		// in small resolution a sprite y value of 0xDO means stop drawing sprites
+		if ((m_Height == NUM_RES_VERTICAL) && (y == 0xD0))
+			break;
+
+		// this is made sure the sprite will wrap if the top part
+		// is off screen but the bottom isn't
+		if (y > 0xD0)
+		{
+			y -= 0x100 ;
+		}
+
+		// y value is memory is actually y+1
+		y++ ;		
+
+		// does the sprite fall within range of current scanline taking into account its size?
+		if ((vCounter>=y) && (vCounter < (y+size)))
+		{
+			// record how many sprites we have drawn this scanline
+			spriteCount++;
+			
+			// we can only draw 8 sprites per scanline. If drawing more set overflow and stop
+			if (spriteCount >8)
+			{
+				SetSpriteOverflow( );
+				break;
+			}
+			
+			int x = m_VRAM[satbase+128+(sprite*2)] ;
+			WORD tileNumber = m_VRAM[satbase+129+(sprite*2)] ;
+			
+
+			// if bit 3 of reg0 is set, x -= 8
+			if (shiftX)
+				x-=8 ;
+
+			// are we using first sprite patterns or second
+			if (useSecondPattern)
+				tileNumber += 256 ;
+
+			if (is8x16)
+			{
+				// ignore bit 0 of tile number if using 8x16 for lower tile
+				if (y < (vCounter + 9))
+					tileNumber = BitReset(tileNumber,0) ;
+			}
+
+			int i;
+			int col ;
+
+			// each tile takes up 32 bytes in memory (4 bytes per line)
+			int startAddress = tileNumber * 32 ;
+			
+			// get the exact memory location for the current line being drawn of the tile
+			// remember each line is 4 bytes
+			startAddress += (4 * (vCounter-y)) ;
+
+			// gather the 4 bytes of data needed to draw the current line of the tile
+			BYTE data1 = m_VRAM[startAddress] ;
+			BYTE data2 = m_VRAM[startAddress+1] ;
+			BYTE data3 = m_VRAM[startAddress+2] ;
+			BYTE data4 = m_VRAM[startAddress+3] ;
+
+			// draw all 8 pixels for the current tile line
+			for (i = 0, col = 7 ; i < 8; i++, col--)
+			{
+				// make sure we dont go off the edge of the screen
+				if ((x+i)>= NUM_RES_HORIZONTAL)
+				{
+					continue ;
+				}
+
+				// is this a sprite collision?
+				if (GetScreenPixelColour(x+i,vCounter,0) != SCREENBLANKCOLOUR)
+				{
+					SetSpriteCollision() ;
+					continue ;
+				}
+				
+				// which palette to use?
+				BYTE palette = 0 ;
+				BYTE bit = BitGetVal(data4,col) ;
+				palette = (bit << 3) ;
+				bit = BitGetVal(data3,col) ;
+				palette |= (bit << 2) ;
+				bit = BitGetVal(data2,col) ;
+				palette |= (bit << 1) ;
+				bit = BitGetVal(data1, col) ;
+				palette |= bit ;
+
+				// palette 0 is transparency
+				if (palette == 0)
+					continue ;
+
+				// sprites always use the second palette region in memory (hence + 16)
+				BYTE colour = m_CRAM[palette+16] ;
+
+				// get its RGB components
+				BYTE red = colour & 0x3 ;
+				colour >>=2 ;
+				BYTE green = colour & 0x3 ;
+				colour >>=2 ;
+				BYTE blue = colour & 0x3 ;				
+				
+				// we now have all the data needed to colour this pixel. So write it to the screen
+				WriteToScreen(x+i, vCounter,GetColourShade(red),GetColourShade(green),GetColourShade(blue)) ;
+			}
+		}
+	}
+}

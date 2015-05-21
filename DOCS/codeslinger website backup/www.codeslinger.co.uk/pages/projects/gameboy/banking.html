@@ -1,0 +1,370 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<!-- Mirrored from www.codeslinger.co.uk/pages/projects/gameboy/banking.html by HTTrack Website Copier/3.x [XR&CO'2010], Thu, 11 Aug 2011 17:34:17 GMT -->
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="description" content="_Emulation Programming_" />
+<meta name="keywords" content="_Emulation,Chip8,Gameboy,NES,SNES,Genesis,Master,System,Mega,Drive_" />
+<meta name="author" content="CodeSlinger /" />
+<link rel="stylesheet" type="text/css" href="../../../css.css" media="screen,projection" title="CodeSlinger (screen)" />
+<link rel="stylesheet" type="text/css" href="../../../print.css" media="print" />
+<title>codeslinger.co.uk</title>
+</head>
+
+<body>
+<div>
+<br><br>
+</div>
+
+<div id="container">
+<div id="logo">
+<h1><a href="../../../index-2.html">codeslinger.co.uk</a></h1>
+</div>
+
+<div id="navitabs">
+<h2 class="hide">Site menu:</h2>
+<a class="navitab" href="../../../index-3.html">Home</a><span class="hide"> | </span>
+<a class="navitab" href="../../basics.html">Basics</a><span class="hide"> | </span>
+<a class="navitab" href="../zuko.html">Zuko</a><span class="hide"> | </span>
+<a class="navitab" href="../megadrive.html">Mega Drive/Genesis</a><span class="hide"> | </span>
+<a class="navitab" href="../mastersystem.html">Master System</a><span class="hide"> | </span>
+<a class="activenavitab" href="../gameboy.html">Gameboy</a><span class="hide"> | </span>
+<a class="navitab" href="../chip8.html">Chip8</a><span class="hide"> | </span>
+<a class="navitab" href="../../blog/index.html">Blog</a><span class="hide"> | </span>
+</div>
+	
+<div id="desc">
+<h2>codeslinger.co.uk</h2>
+<p> Gameboy - Rom and Ram Banking.</p>
+
+</div>
+
+<div id="main">
+
+<h3><b>Detecting Rom Bank Mode:</b></h3>
+<p>
+
+There are two types of ROM banking that I have emulated, MBC1 and MBC2. The majority of the games (80%) are MBC1 so to have a decent emulator this is a must to emulate. Some games like Tetris and Bubble Ghost
+dont use ROM banking at all. They just load the entire game into memory region 0x0-0x8000 and never need to swap memory in and out. To detect what ROM mode the game is you have to read memory 0x147 after the
+game has been loaded into memory. If 0x147 is 0 then the game has no memory banking (like tetris), however if it is 1,2 or 3 then it is MBC1 and if it is 5 or 6 then it is MBC2. This gives the following code:
+
+<p class="code">
+
+m_MBC1 = false ; <br>
+m_MBC2 = false ; <br><br>
+switch (m_CartridgeMemory[0x147])<br>
+{<br>
+   case 1 : m_MBC1 = true ; break <br>
+   case 2 : m_MBC1 = true ; break <br>
+   case 3 : m_MBC1 = true ; break <br>
+   case 5 : m_MBC2 = true ; break <br>
+   case 6 : m_MBC2 = true ; break <br>
+   default : break ; <br>
+}
+</p>
+
+We also need a variable declaration to specify which ROM bank is currently loaded into internal memory address 0x4000-0x7FFF. As ROM Bank 0
+is fixed into memory address 0x0-0x3FFF this variable should never be 0, it should be at least 1. We need to initialize this variable on emulator load to 1.
+
+<p class = "code">
+ m_CurrentROMBank = 1 ; // this is type BYTE
+</p>
+
+</p>
+
+<h3><b>Detecting RAM Banking:</b> </h3>
+<p>
+ Cartridge memory address 0x148 tells how much RAM banks the game has. The maximum is 4. The size of 1 RAM bank is 0x2000 bytes so if we have an array of size
+ 0x8000 this is enough space for all the RAM banks. Like ROM banking we also need a variable to point at which RAM bank the game is using between values of 0-3. This
+ gives us the following declarations.
+ 
+ <p class = "code">
+ 
+ BYTE m_RAMBanks[0x8000] ;<br>
+ BYTE m_CurrentRAMBank ;<br>
+ 
+ </p>
+ 
+ We then need to initialize these like so:
+ 
+  <p class = "code">
+ memset(&m_RAMBanks,0,sizeof(m_RAMBanks) ;<br>
+ m_CurrentRAMBank=0;
+  
+ </p>
+ <strong>RAM Banking is not used in MBC2! Therefore m_CurrentRAMBank will always be 0!</strong>
+</p>
+
+<h3><b>Controlling reading from ROM and RAM:</b> </h3>
+<p>
+As stated in the section called <a href="memory.html">Memory Control and Map</a> we need to control Reading and Writing to the internal memory. The main reason
+to control the reading is to make sure everything reads from the correct ROM and RAM banks. This will give us the following function:
+
+<p class = "code" >
+// read memory should never modify member variables hence const<br>
+BYTE Emulator::ReadMemory(WORD address) const <br>
+{<br>
+   // are we reading from the rom memory bank?<br>
+   if ((address>=0x4000) && (address <= 0x7FFF))<br>
+   {<br>
+     WORD newAddress = address - 0x4000 ;<br>
+     return m_CartridgeMemory[newAddress + (m_CurrentROMBank*0x4000)] ;<br>
+   }<br><br>
+
+   // are we reading from ram memory bank? <br>
+   else if ((address >= 0xA000) && (address <= 0xBFFF))<br>
+   {<br>
+     WORD newAddress = address - 0xA000 ;<br>
+     return m_RAMBanks[newAddress + (m_CurrentRAMBank*0x2000)] ;<br>
+
+   }<br><br>
+
+   // else return memory<br>
+   return m_Rom[address] ;<br>
+
+}
+</p>
+
+That was actually pretty easy wasn't it? Hopefully now you can see why you must ALWAYS you ReadMemory and WriteMemory when accessing internal gameboy memory
+
+</p>
+
+<h3><b>Changing the current ROM and RAM Banks:</b> </h3>
+<p>
+
+Now we know how to read from the correct memory banks but how does the game request the banks to be changed? In my opinion this is one of the most difficult
+parts of the gameboy emulation. It isnt difficult to code but it is difficult to make sense of what you have to do. The way it works is the gameboy attempts to
+write directy to ROM but our WriteMemory function will trap it and decypher why it is trying to write to ROM. Depending on the memory address of where it is trying
+to write to ROM we need to take different action. If the address is between 0x2000-0x4000 then it is a ROM bank change. If the address is 0x4000-0x6000 then it is a RAM bank change or
+a ROM bank change depending on what current ROM/RAM mode is selected (explained in a minute). If the value is between 0x0-0x2000 then it enables RAM bank writing (also explained in a minute).
+We can now change the ROM part of our WriteMemory function to this:
+
+<p class="code">
+void Emulator::WriteMemory(WORD address, BYTE data) <br>
+{<br>
+   if (address < 0x8000)<br>
+   {<br>
+     HandleBanking(address,data) ; <br>
+   }<br><br>
+
+   else if ((address >= 0xA000) && (address < 0xC000))<br>
+   {<br>
+     if (m_EnableRAM)<br>
+     {<br>
+       WORD newAddress = address - 0xA000 ;<br>
+       m_RAMBanks[newAddress + (m_CurrentRAMBank*0x2000)] = data ;<br>
+     }<br>
+   }<br><br>
+   // the rest of this function carries on as before<br>
+}<br><br>
+
+///////////////////////////////////////////////////////////////// <br><br>
+
+void Emulator::HandleBanking(WORD address, BYTE data) <br>
+{<br>
+   // do RAM enabling<br>
+   if (address < 0x2000)<br>
+   {<br>
+     if (m_MBC1 || m_MBC2)<br>
+     {<br>
+       DoRamBankEnable(address,data) ;<br>
+     }<br>
+   }<br><br>
+
+   // do ROM bank change <br>
+   else if ((address >= 0x200) && (address < 0x4000))<br>
+   {<br>
+     if (m_MBC1 || m_MBC2)<br>
+     {<br>
+       DoChangeLoROMBank(data) ; <br>
+     }<br>
+   }<br><br>
+
+   // do ROM or RAM bank change<br>
+   else if ((address >= 0x4000) && (address < 0x6000))<br>
+   {<br>
+     // there is no rambank in mbc2 so always use rambank 0<br>
+     if (m_MBC1)<br>
+     {<br>
+       if(m_ROMBanking)<br>
+       {<br>
+         DoChangeHiRomBank(data) ; <br>
+       }<br>
+       else<br>
+       {<br>
+         DoRAMBankChange(data) ; <br>
+       } <br>
+     }<br>
+   } <br><br>
+
+   // this will change whether we are doing ROM banking<br>
+   // or RAM banking with the above if statement<br>
+   else if ((address >= 0x6000) && (address < 0x8000))<br>
+   {<br>
+     if (m_MBC1)<br>
+       DoChangeROMRAMMode(data) ;<br>
+   }<br><br>
+}<br>
+</p>
+
+Read on for a full explanation of what the above code means
+
+
+</p>
+
+<h3><b>Enabling RAM:</b> </h3>
+<p>
+In order to write to RAM banks the game must specifically request that ram bank writing is enabled. It does this
+by attempting to write to internal ROM address between 0 and 0x2000. For MBC1 if the lower nibble of the data the game
+is writing to memory is 0xA then ram bank writing is enabled else if the lower nibble is 0 then ram bank writing is disabled.
+MBC2 is exactly the same except there is an additional clause that bit 4 of the address byte must be 0. This gives the following
+function:
+
+<p class = "code">
+void Emulator::DoRAMBankEnable(WORD address, BYTE data)<br>
+{<br>
+   if (m_MBC2)<br>
+   {<br> 
+     if (TestBit(address,4) == 1) return ;<br>
+   }<br><br>
+
+   BYTE testData = data & 0xF ;<br>
+   if (testData == 0xA)<br>
+     m_EnableRAM = true ;<br>
+   else if (testData == 0x0)<br>
+     m_EnableRAM = false ;<br>
+}
+</p>
+
+</p>
+
+<h3><b>Changing ROM Banks Part 1:</b> </h3>
+<p>
+If the memory bank is MBC1 then there is two parts to changing the current rom bank. The first way is if the game
+writes to memory address 0x2000-0x3FFF then it changes the lower 5 bits of the current rom bank but not bits 5 and 6.
+The second way is writing to memory address 0x4000-0x5FFF during rombanking mode (explained later) which only changes bits 5 and 6
+not bits 0-4. So combining these two methods you can change bits 0-6 of which rom bank is currently in use. However if the game
+is using MBC2 then this is much easier. If the game writes to address 0x2000-0x3FFF then the current ram bank changes bits 0-3 and
+bits 5-6 are never set. This means writing to address 0x4000-0x5FFF in MBC2 mode does nothing. This section explains what happens
+when the game writes to memory address 0x2000-0x3FFF.
+
+<p class="code">
+
+void Emulator::DoChangeLoROMBank(BYTE data)<br>
+{<br>
+   if (m_MBC2)<br>
+   {<br>
+     m_CurrentROMBank = data & 0xF ;<br>
+     if (m_CurrentROMBank == 0) m_CurrentROMBank++ ;<br>
+     return ;<br>
+   }<br><br>
+
+   BYTE lower5 = data & 31 ;<br>
+   m_CurrentROMBank &= 224; // turn off the lower 5<br>
+   m_CurrentROMBank |= lower5 ;<br>
+   if (m_CurrentROMBank == 0) m_CurrentROMBank++ ;<br>
+} 
+
+</p>
+
+So if we're using MBC2 then the current rom bank becomes the lower nibble of data. However if we are using MBC1
+then we must set the lower 5 bits of current rom bank to the lower 5 bits of data whilst keeping the upper 3 bits the same.
+You may be wondering why I increment m_CurrentROMBank if it is set to 0. The reason is that rom bank 0 is static and can always
+be found in memory address 0x000-0x4000 so rom bank 0 should never be loaded into memory 0x4000-0x8000. If m_CurrentROMBank is ever
+set to 0 then it is treated as rombank 1 so rombank 1 or greater will reside in the bank region 0x4000-0x8000.
+
+</p>
+
+<h3><b>Changing ROM Banks Part 2:</b> </h3>
+<p>
+As just stated there are two ways to change the current rom bank in MBC1 mode. This shows how to change the bits 5 and 6
+when writing to memory address 0x4000-0x6000 and m_RomBanking is true (explained later)
+
+<p class = "code">
+void Emulator::DoChangeHiRomBank(BYTE data)<br>
+{<br>
+   // turn off the upper 3 bits of the current rom<br>
+   m_CurrentROMBank &= 31 ; <br><br>
+
+   // turn off the lower 5 bits of the data<br>
+   data &= 224 ; <br>
+   m_CurrentROMBank |= data ;<br>
+   if (m_CurrentROMBank == 0) m_CurrentROMBank++ ;<br>
+}
+</p>
+
+</p>
+
+<h3><b>Changing RAM Banks:</b> </h3>
+<p>
+You cannot change RAM Banks in MBC2 as that has external ram on the cartridge. To change RAM Banks in MBC1 the game
+must again write to memory address 0x4000-0x6000 but this time m_RomBanking must be false (explained later). The current
+ram bank gets set to the lower 2 bits of the data like so:
+
+
+<p class = "code">
+void Emulator::DoRAMBankChange(BYTE data)<br>
+{<br>
+   m_CurrentRAMBank = data & 0x3 ;<br>
+}
+</p>
+
+<h3><b>Selecting either ROM or RAM banking mode:</b> </h3>
+<p>
+Finally the last part of this banking marathon is this m_RomBanking I keep going on about. This variable is responsible
+for how to act when the game writes to memory address 0x4000-0x6000. This variable defaults to true but is changes during
+MBC1 mode when the game writes to memory address 0x6000-0x8000. If the least significant bit of the data being written to this
+address range is 0 then m_RomBanking is set to true, otherwise it is set to false meaning there is about to be a ram bank change.
+It is important to set m_CurrentRAMBank to 0 whenever you set m_RomBanking to true because the gameboy can only use rambank 0 in this
+mode.
+
+<p class = "code">
+void Emulator::DoChangeROMRAMMode(BYTE data)<br>
+{<br>
+   BYTE newData = data & 0x1 ; <br>
+   m_RomBanking = (newData == 0)?true:false ;<br>
+   if (m_RomBanking)<br>
+     m_CurrentRAMBank = 0 ; <br>
+}
+</p>
+
+That is the end of the banking section. Next is <a href="timers.html">The Timers</a> section which is easier than this!
+
+<br><br>
+</p>
+
+</div>
+
+<div id="sidebar">
+<h3>Gameboy Emulation:</h3>
+
+<p>
+<a class="sidelink" href="beginning.html">Getting Started</a><span class="hide"> | </span>
+<a class="sidelink" href="hardware.html">The Hardware</a><span class="hide"> | </span>
+<a class="sidelink" href="memory.html">Memory Control and Map</a><span class="hide"> | </span>
+<a class="sidelink" href="banking.html">ROM and RAM Banking</a><span class="hide"> | </span>
+<a class="sidelink" href="timers.html">The Timers</a><span class="hide"> | </span>
+<a class="sidelink" href="interupts.html">Interupts</a><span class="hide"> | </span>
+<a class="sidelink" href="lcd.html">LCD</a><span class="hide"> | </span>
+<a class="sidelink" href="dma.html">DMA Transfer</a><span class="hide"> | </span>
+<a class="sidelink" href="graphics.html">Graphic Emulation</a><span class="hide"> | </span>
+<a class="sidelink" href="joypad.html">Joypad Emulation</a><span class="hide"> | </span>
+<a class="sidelink" href="opcodes.html">Opcode Examples</a><span class="hide"> | </span>
+<a class="sidelink" href="finished.html">Finished Product</a><span class="hide"> | </span>
+
+</p>
+
+</div>
+    
+<div id="footer">
+Copyright © 2008 codeslinger.co.uk
+</div>
+
+</div>
+</body>
+
+<!-- Mirrored from www.codeslinger.co.uk/pages/projects/gameboy/banking.html by HTTrack Website Copier/3.x [XR&CO'2010], Thu, 11 Aug 2011 17:34:17 GMT -->
+</html>
+
+

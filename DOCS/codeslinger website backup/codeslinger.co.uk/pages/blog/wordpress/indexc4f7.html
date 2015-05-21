@@ -1,0 +1,168 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" dir="ltr">
+
+<head profile="http://gmpg.org/xfn/11">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+<title>Emulator Development  &raquo; Blog Archive   &raquo; Quick Emulator Update</title>
+
+<link rel="stylesheet" href="wp-content/themes/default/style.css" type="text/css" media="screen" />
+<link rel="alternate" type="application/rss+xml" title="Emulator Development RSS Feed" href="indexd784.html?feed=rss2" />
+<link rel="pingback" href="xmlrpc.html" />
+
+<style type="text/css" media="screen">
+
+	#page { background: url("wp-content/themes/default/images/kubrickbgwide.jpg") repeat-y top; border: none; }
+
+</style>
+
+<link rel="EditURI" type="application/rsd+xml" title="RSD" href="xmlrpc0db0.php?rsd" />
+<link rel="wlwmanifest" type="application/wlwmanifest+xml" href="wp-includes/wlwmanifest.xml" /> 
+<meta name="generator" content="WordPress 2.5.1" />
+
+</head>
+<body>
+<div id="page">
+
+
+<div id="header">
+	<div id="headerimg">
+		<h1><a href="index.html">Emulator Development</a></h1>
+		<div class="description">The art of emulator programming</div>
+	</div>
+</div>
+<hr />
+
+	<div id="content" class="widecolumn">
+
+	
+		<div class="navigation">
+			<div class="alignleft">&laquo; <a href="index42dc.html?p=6">Divider Register</a></div>
+			<div class="alignright"><a href="index2df4.html?p=8">Gameboy emulator 95% compatibility</a> &raquo;</div>
+		</div>
+
+		<div class="post" id="post-7">
+			<h2>Quick Emulator Update</h2>
+
+			<div class="entry">
+				<p>So far my emulator has the following working:</p>
+<ul>
+<li>Timers</li>
+<li>Divider</li>
+<li>LCD Status</li>
+<li>Interupt Handling</li>
+</ul>
+<p>I&#8217;ve yet to post on how to emulate the LCD Status (moderate difficulty) and Interupt Handling (easy). Hopefully I&#8217;ll get time to write a detailed post on this later on today.</p>
+<p>So far my emulator is dumping the following information when running every second:</p>
+<blockquote><p>
+There has been: 4194304 clock cycles<br />
+There has been: 60 vblanks<br />
+There has been: 16 timer interupts<br />
+There has been: 64 divider overflows
+</p></blockquote>
+<p>The timer is set to a frequency of 4096Hz and the TMA is set to 0. So far everything seems to be working perfectly. Just input and graphic emulation until I start work on the opcode emulation. I always prefer writing the hardware emulation before the opcode emulation because in my opinion it is the harder of the two. So I like to get it right before moving on.</p>
+
+								
+				<p class="postmetadata alt">
+					<small>
+						This entry was posted
+												on Friday, July 18th, 2008 at 8:27 am						and is filed under <a href="index81ea.html?cat=3" title="View all posts in Gameboy" rel="category">Gameboy</a>.
+						You can follow any responses to this entry through the <a href='indexaf44.html?feed=rss2&amp;p=7'>RSS 2.0</a> feed.
+
+													You can <a href="#respond">leave a response</a>, or <a href="indexc4f7.html?p=7" rel="trackback">trackback</a> from your own site.
+
+						
+					</small>
+				</p>
+
+			</div>
+		</div>
+
+	
+<!-- You can start editing here. -->
+
+	<h3 id="comments">One Response to &#8220;Quick Emulator Update&#8221;</h3>
+
+	<ol class="commentlist">
+
+	
+		<li class="alt" id="comment-125">
+						<cite>Kanter35</cite> Says:
+						<br />
+
+			<small class="commentmetadata"><a href="#comment-125" title="">September 9th, 2010 at 8:35 am</a> </small>
+
+			<p>When i studied your emulator, i found something (may be an error)<br />
+m_CyclesThisUpdate += 8 ;<br />
+instead of + 16<br />
+see below</p>
+<p>// shift right. bit 0 into carry<br />
+void Emulator::CPU_SRL_MEMORY(WORD address)<br />
+{<br />
+	//WHEN EDITING THIS FUNCTION ALSO EDIT CPU_SRL</p>
+<p>	m_CyclesThisUpdate += 8 ;</p>
+<p>&#8220;should be increased by 16 no ?<br />
+&#8230;<br />
+}</p>
+
+		</li>
+
+	
+	
+	</ol>
+
+ 
+
+
+<h3 id="respond">Leave a Reply</h3>
+
+
+<form action="http://codeslinger.co.uk/pages/blog/wordpress/wp-comments-post.php" method="post" id="commentform">
+
+
+<p><input type="text" name="author" id="author" value="" size="22" tabindex="1" />
+<label for="author"><small>Name (required)</small></label></p>
+
+<p><input type="text" name="email" id="email" value="" size="22" tabindex="2" />
+<label for="email"><small>Mail (will not be published) (required)</small></label></p>
+
+<p><input type="text" name="url" id="url" value="" size="22" tabindex="3" />
+<label for="url"><small>Website</small></label></p>
+
+
+<!--<p><small><strong>XHTML:</strong> You can use these tags: <code>&lt;a href=&quot;&quot; title=&quot;&quot;&gt; &lt;abbr title=&quot;&quot;&gt; &lt;acronym title=&quot;&quot;&gt; &lt;b&gt; &lt;blockquote cite=&quot;&quot;&gt; &lt;cite&gt; &lt;code&gt; &lt;del datetime=&quot;&quot;&gt; &lt;em&gt; &lt;i&gt; &lt;q cite=&quot;&quot;&gt; &lt;strike&gt; &lt;strong&gt; </code></small></p>-->
+
+<p><textarea name="comment" id="comment" cols="100%" rows="10" tabindex="4"></textarea></p>
+
+<p><input name="submit" type="submit" id="submit" tabindex="5" value="Submit Comment" />
+<input type="hidden" name="comment_post_ID" value="7" />
+</p>
+
+</form>
+
+
+
+	
+	</div>
+
+
+<hr />
+<div id="footer">
+<!-- If you'd like to support WordPress, having the "powered by" link somewhere on your blog is the best way; it's our only promotion or advertising. -->
+	<p>
+		Emulator Development is proudly powered by
+		<a href="http://wordpress.org/">WordPress</a>
+		<br /><a href="indexd784.html?feed=rss2">Entries (RSS)</a>
+		and <a href="indexa6da.html?feed=comments-rss2">Comments (RSS)</a>.
+		<!-- 19 queries. 0.194 seconds. -->
+	</p>
+</div>
+</div>
+
+<!-- Gorgeous design by Michael Heilemann - http://binarybonsai.com/kubrick/ -->
+
+		</body>
+
+<!-- Mirrored from codeslinger.co.uk/pages/blog/wordpress/?p=7 by HTTrack Website Copier/3.x [XR&CO'2010], Thu, 11 Aug 2011 17:35:01 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8"><!-- /Added by HTTrack -->
+</html>

@@ -1,0 +1,217 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<!-- Mirrored from www.codeslinger.co.uk/pages/projects/gameboy/joypad.html by HTTrack Website Copier/3.x [XR&CO'2010], Thu, 11 Aug 2011 17:34:19 GMT -->
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="description" content="_Emulation Programming_" />
+<meta name="keywords" content="_Emulation,Chip8,Gameboy,NES,SNES,Genesis,Master,System,Mega,Drive_" />
+<meta name="author" content="CodeSlinger /" />
+<link rel="stylesheet" type="text/css" href="../../../css.css" media="screen,projection" title="CodeSlinger (screen)" />
+<link rel="stylesheet" type="text/css" href="../../../print.css" media="print" />
+<title>codeslinger.co.uk</title>
+</head>
+
+<body>
+<div>
+<br><br>
+</div>
+
+<div id="container">
+<div id="logo">
+<h1><a href="../../../index-2.html">codeslinger.co.uk</a></h1>
+</div>
+
+<div id="navitabs">
+<h2 class="hide">Site menu:</h2>
+<a class="navitab" href="../../../index-3.html">Home</a><span class="hide"> | </span>
+<a class="navitab" href="../../basics.html">Basics</a><span class="hide"> | </span>
+<a class="navitab" href="../zuko.html">Zuko</a><span class="hide"> | </span>
+<a class="navitab" href="../megadrive.html">Mega Drive/Genesis</a><span class="hide"> | </span>
+<a class="navitab" href="../mastersystem.html">Master System</a><span class="hide"> | </span>
+<a class="activenavitab" href="../gameboy.html">Gameboy</a><span class="hide"> | </span>
+<a class="navitab" href="../chip8.html">Chip8</a><span class="hide"> | </span>
+<a class="navitab" href="../../blog/index.html">Blog</a><span class="hide"> | </span>
+</div>
+	
+<div id="desc">
+<h2>codeslinger.co.uk</h2>
+<p> Gameboy - Joypad.</p>
+
+</div>
+
+<div id="main">
+
+<h3><b>Joypad:</b></h3>
+<p>
+The gameboy has an inbuilt joypad with 8 buttons. There are 4 directional buttons (up, down, left and right) and standard
+buttons (start,select, A and B). The joypad register can be found at address 0xFF00 and it is broken down like so:
+
+<p class = "block">
+Taken from pandocs<br>
+  Bit 7 - Not used<br>
+  Bit 6 - Not used<br>
+  Bit 5 - P15 Select Button Keys      (0=Select)<br>
+  Bit 4 - P14 Select Direction Keys   (0=Select)<br>
+  Bit 3 - P13 Input Down  or Start    (0=Pressed) (Read Only)<br>
+  Bit 2 - P12 Input Up    or Select   (0=Pressed) (Read Only)<br>
+  Bit 1 - P11 Input Left  or Button B (0=Pressed) (Read Only)<br>
+  Bit 0 - P10 Input Right or Button A (0=Pressed) (Read Only)
+</p>
+Bits 0-3 are set by the emulator to show the state of the joypad. As you can see the directional buttons
+and the standard buttons share this range of bits so how would the game know if bit 3 was set whether it was
+the directional down button or the stanadrd start button? The way this works is that the game sets bit 4 and 5
+depending on whether it wants to check on the directional buttons or the standard buttons.<br><br>
+
+The way I believe this works in the original gameboy hardware is the game writes to memory 0xFF00 with bit 4 or 5 set
+(never both). It then reads from memory 0xFF00 and instead of reading back what it just wrote what is returned is the
+state of the joypad based on whether bit 4 or bit 5 was set. For example if the game wanted to check which directional buttons
+was pressed it would set bit 4 to 1 and then it would do a read memory on 0xFF00.
+If the up key is pressed then when reading 0xFF00 bit 2 would be set to 0 to signal that the directional button up is pressed (0 means pressed, 1 unpressed).
+However if up was not pressed but the select button was then bit 2 would be left at 1 meaning nothing is pressed, even though
+the select button is pressed which maps on to bit 2. The reason why bit 2 would be set to 1 signalling it is not pressed even when it
+is is because bit 4 was set to 1 meaning the game is only interested in the state of the directional buttons. <br><br>
+
+The way I emulate this is I have a BYTE variabled called m_JoypadState where each bit represents the state of the joypad (8 buttons
+and 8 bits so it works fine). Whenever a button is pressed I set the correct bit in m_JoypadState to 0 and if it is not pressed it is set
+to 1. If a bit in m_JoypadState goes from 1 to 0 then it means this button has just been pressed so a joypad interupt is requested.<br><br>
+
+Whenever the game reads from 0xFF00 i trap it with ReadMemory and call a function which looks at memory address 0xFF00 to see if the game
+is interest in directional buttons or standard buttons and then I return a byte data which combines m_JoypadState with 0xFF00 so the game
+gets the correct state of the joypad. While I remember lets add the following to ReadMemory
+
+<p class="code">
+else if (0xFF00 == address)<br>
+   return GetJoypadState() ;
+</p>
+
+Before I show you the implementation of GetJoypadState I'll show you how to set m_JoypadState which GetJoypadState will need.
+
+<p class="code">
+void Emulator::KeyPressed(int key)<br>
+{<br>
+   bool previouslyUnset = false ; <br><br>
+
+   // if setting from 1 to 0 we may have to request an interupt<br>
+   if (TestBit(m_JoypadState, key)==false)<br>
+     previouslyUnset = true ;<br><br>
+
+   // remember if a keypressed its bit is 0 not 1<br> 
+   m_JoypadState = BitReset(m_JoypadState, key) ;<br><br>
+
+   // button pressed<br>
+   bool button = true ;<br><br>
+
+   // is this a standard button or a directional button?<br>
+   if (key > 3) <br>
+     button = true ;<br>
+   else // directional button pressed<br>
+     button = false ;<br><br>
+
+   BYTE keyReq = m_Rom[0xFF00] ;<br>
+   bool requestInterupt = false ; <br><br>
+
+   // only request interupt if the button just pressed is<br>
+   // the style of button the game is interested in<br>
+   if (button && !TestBit(keyReq,5))<br>
+     requestInterupt = true ;<br><br>
+	
+   // same as above but for directional button<br>
+   else if (!button && !TestBit(keyReq,4))<br>
+     requestInterupt = true ;<br><br>
+
+   // request interupt<br>
+   if (requestInterupt && !previouslyUnset)<br>
+     RequestInterupt(4) ;<br>
+}
+</p>
+
+The function thats called when a key is released is much simpler
+<p class="code">
+void Emulator::KeyReleased(int key)<br>
+{<br>
+   m_JoypadState = BitSet(m_JoypadState,key) ;<br>
+}
+</p>
+
+The way I call the above functions is with SDL_KeyEvents. Whenever a key is pressed
+I call KeyPressed function passing the following in as arguments
+
+<p class="block">
+SDLK_a : key = 4 <br> 
+SDLK_s : key = 5 <br>
+SDLK_RETURN : key = 7 <br>
+SDLK_SPACE : key = 6 <br>
+SDLK_RIGHT : key = 0 <br>
+SDLK_LEFT : key = 1 <br>
+SDLK_UP : key = 2  <br>
+SDLK_DOWN : key = 3 <br>
+</p>
+
+Now we have everything needed to write the GetJoypadState function
+<p class="code">
+BYTE Emulator::GetJoypadState() const<br>
+{<br>
+   BYTE res = m_Rom[0xFF00] ;<br>
+   // flip all the bits<br>
+   res ^= 0xFF ; <br><br>
+
+   // are we interested in the standard buttons?<br>
+   if (!TestBit(res, 4))<br>
+   {<br>
+     BYTE topJoypad = m_JoypadState >> 4 ;<br>
+     topJoypad |= 0xF0 ; // turn the top 4 bits on<br>
+     res &= topJoypad ; // show what buttons are pressed<br>
+   }<br>
+   else if (!TestBit(res,5))//directional buttons<br>
+   {<br>
+     BYTE bottomJoypad = m_JoypadState & 0xF ;<br>
+     bottomJoypad |= 0xF0 ; <br>
+     res &= bottomJoypad ; <br>
+   }<br>
+   return res ;<br>
+}
+</p>
+
+If you are confused why m_JoypadState is shifted left 4 times when checking standard buttons is because
+the standard buttons are stored in the top nibble of m_JoypadState but then need to be in the lower nibble
+for when it gets logically or'd.
+<br><br>
+</p>
+
+
+
+</div>
+
+<div id="sidebar">
+<h3>Gameboy Emulation:</h3>
+
+<p>
+<a class="sidelink" href="beginning.html">Getting Started</a><span class="hide"> | </span>
+<a class="sidelink" href="hardware.html">The Hardware</a><span class="hide"> | </span>
+<a class="sidelink" href="memory.html">Memory Control and Map</a><span class="hide"> | </span>
+<a class="sidelink" href="banking.html">ROM and RAM Banking</a><span class="hide"> | </span>
+<a class="sidelink" href="timers.html">The Timers</a><span class="hide"> | </span>
+<a class="sidelink" href="interupts.html">Interupts</a><span class="hide"> | </span>
+<a class="sidelink" href="lcd.html">LCD</a><span class="hide"> | </span>
+<a class="sidelink" href="dma.html">DMA Transfer</a><span class="hide"> | </span>
+<a class="sidelink" href="graphics.html">Graphic Emulation</a><span class="hide"> | </span>
+<a class="sidelink" href="joypad.html">Joypad Emulation</a><span class="hide"> | </span>
+<a class="sidelink" href="opcodes.html">Opcode Examples</a><span class="hide"> | </span>
+<a class="sidelink" href="finished.html">Finished Product</a><span class="hide"> | </span>
+
+</p>
+
+</div>
+    
+<div id="footer">
+Copyright © 2008 codeslinger.co.uk
+</div>
+
+</div>
+</body>
+
+<!-- Mirrored from www.codeslinger.co.uk/pages/projects/gameboy/joypad.html by HTTrack Website Copier/3.x [XR&CO'2010], Thu, 11 Aug 2011 17:34:19 GMT -->
+</html>
+
+

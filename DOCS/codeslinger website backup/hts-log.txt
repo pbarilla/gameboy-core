@@ -1,0 +1,32 @@
+HTTrack3.44-1+htsswf+htsjava launched on Thu, 11 Aug 2011 18:33:54 at http://www.codeslinger.co.uk +*.png +*.gif +*.jpg +*.css +*.js -ad.doubleclick.net/* -mime:application/foobar +codeslinger.co.uk/*
+(winhttrack -qiC2%Ps2u1%s%uN0%I0p3DaK0H0%kf2A25000%f#f -F "Mozilla/4.5 (compatible; HTTrack 3.0x; Windows 98)" -%F "<!-- Mirrored from %s%s by HTTrack Website Copier/3.x [XR&CO'2010], %s -->" -%l "en, en, *" http://www.codeslinger.co.uk -O1 C:\Users\David\Documents\Websites\Codeslinger +*.png +*.gif +*.jpg +*.css +*.js -ad.doubleclick.net/* -mime:application/foobar +codeslinger.co.uk/* )
+
+Information, Warnings and Errors reported for this mirror:
+note:	the hts-log.txt file, and hts-cache folder, may contain sensitive information,
+	such as username/password authentication for websites mirrored in this project
+	do not share these files/folders if you want these information to remain private
+
+18:33:57	Error: 	"Not Found" (404) at link www.codeslinger.co.uk/index.html (from www.codeslinger.co.uk/)
+18:34:02	Error: 	"Not Found" (404) at link www.codeslinger.co.uk/images/gang.jpg (from www.codeslinger.co.uk/css.css)
+18:34:21	Error: 	"Not Found" (404) at link www.codeslinger.co.uk/pages/blog/blog/index.html (from www.codeslinger.co.uk/pages/blog/index.html)
+18:34:23	Info: 	engine: transfer-status: link updated: codeslinger.co.uk/pages/blog/wordpress/ -> C:/Users/David/Documents/Websites/Codeslinger/codeslinger.co.uk/pages/blog/wordpress/index.html
+18:34:25	Error: 	"Not Found" (404) at link www.codeslinger.co.uk/pages/projects/gameboy/Banking.html (from www.codeslinger.co.uk/pages/projects/gameboy/memory.html)
+18:34:33	Info: 	engine: transfer-status: link updated: codeslinger.co.uk/pages/blog/wordpress/?cat=1 -> C:/Users/David/Documents/Websites/Codeslinger/codeslinger.co.uk/pages/blog/wordpress/indexb31a.html
+18:34:34	Info: 	engine: transfer-status: link updated: codeslinger.co.uk/pages/blog/wordpress/?p=28 -> C:/Users/David/Documents/Websites/Codeslinger/codeslinger.co.uk/pages/blog/wordpress/index3c55.html
+18:34:35	Info: 	engine: transfer-status: link updated: codeslinger.co.uk/pages/blog/wordpress/?cat=3 -> C:/Users/David/Documents/Websites/Codeslinger/codeslinger.co.uk/pages/blog/wordpress/index81ea.html
+18:34:38	Info: 	engine: transfer-status: link updated: codeslinger.co.uk/pages/blog/wordpress/?cat=4 -> C:/Users/David/Documents/Websites/Codeslinger/codeslinger.co.uk/pages/blog/wordpress/indexaa1e.html
+18:34:44	Info: 	engine: transfer-status: link updated: codeslinger.co.uk/pages/blog/wordpress/?paged=2 -> C:/Users/David/Documents/Websites/Codeslinger/codeslinger.co.uk/pages/blog/wordpress/index6146.html
+18:34:48	Info: 	engine: transfer-status: link updated: codeslinger.co.uk/pages/blog/wordpress/?m=200812 -> C:/Users/David/Documents/Websites/Codeslinger/codeslinger.co.uk/pages/blog/wordpress/index7866.html
+18:34:48	Info: 	engine: transfer-status: link updated: codeslinger.co.uk/pages/blog/wordpress/?m=200811 -> C:/Users/David/Documents/Websites/Codeslinger/codeslinger.co.uk/pages/blog/wordpress/index55f6.html
+18:34:49	Info: 	engine: transfer-status: link updated: codeslinger.co.uk/pages/blog/wordpress/?m=200810 -> C:/Users/David/Documents/Websites/Codeslinger/codeslinger.co.uk/pages/blog/wordpress/indexa7bc.html
+18:34:49	Info: 	engine: transfer-status: link updated: codeslinger.co.uk/pages/blog/wordpress/?m=200809 -> C:/Users/David/Documents/Websites/Codeslinger/codeslinger.co.uk/pages/blog/wordpress/indexe77c.html
+18:34:50	Info: 	engine: transfer-status: link updated: codeslinger.co.uk/pages/blog/wordpress/?m=200808 -> C:/Users/David/Documents/Websites/Codeslinger/codeslinger.co.uk/pages/blog/wordpress/indexcffc.html
+18:34:51	Info: 	engine: transfer-status: link updated: codeslinger.co.uk/pages/blog/wordpress/?m=200807 -> C:/Users/David/Documents/Websites/Codeslinger/codeslinger.co.uk/pages/blog/wordpress/index0e62.html
+18:34:52	Info: 	engine: transfer-status: link updated: codeslinger.co.uk/pages/blog/wordpress/?cat=5 -> C:/Users/David/Documents/Websites/Codeslinger/codeslinger.co.uk/pages/blog/wordpress/indexb946.html
+18:35:03	Info: 	engine: transfer-status: link updated: codeslinger.co.uk/pages/blog/wordpress/?p=4 -> C:/Users/David/Documents/Websites/Codeslinger/codeslinger.co.uk/pages/blog/wordpress/index5c7e.html
+18:35:05	Info: 	engine: transfer-status: link updated: codeslinger.co.uk/pages/blog/wordpress/?cat=4&paged=2 -> C:/Users/David/Documents/Websites/Codeslinger/codeslinger.co.uk/pages/blog/wordpress/index6bbf.html
+18:35:19	Info: 	engine: transfer-status: link updated: codeslinger.co.uk/pages/blog/wordpress/?paged=3 -> C:/Users/David/Documents/Websites/Codeslinger/codeslinger.co.uk/pages/blog/wordpress/index8a68.html
+No files purged
+
+HTTrack Website Copier/3.44-1 mirror complete in 1 minutes 37 seconds : 181 links scanned, 175 files written (4341256 bytes overall), 16 files updated [283851 bytes received at 2926 bytes/sec], 1.4 requests per connection
+(4 errors, 0 warnings, 16 messages)

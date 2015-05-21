@@ -1,0 +1,129 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" dir="ltr">
+
+<head profile="http://gmpg.org/xfn/11">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+<title>Emulator Development  &raquo; Blog Archive   &raquo; Divider Register</title>
+
+<link rel="stylesheet" href="wp-content/themes/default/style.css" type="text/css" media="screen" />
+<link rel="alternate" type="application/rss+xml" title="Emulator Development RSS Feed" href="indexd784.html?feed=rss2" />
+<link rel="pingback" href="xmlrpc.html" />
+
+<style type="text/css" media="screen">
+
+	#page { background: url("wp-content/themes/default/images/kubrickbgwide.jpg") repeat-y top; border: none; }
+
+</style>
+
+<link rel="EditURI" type="application/rsd+xml" title="RSD" href="xmlrpc0db0.php?rsd" />
+<link rel="wlwmanifest" type="application/wlwmanifest+xml" href="wp-includes/wlwmanifest.xml" /> 
+<meta name="generator" content="WordPress 2.5.1" />
+
+</head>
+<body>
+<div id="page">
+
+
+<div id="header">
+	<div id="headerimg">
+		<h1><a href="index.html">Emulator Development</a></h1>
+		<div class="description">The art of emulator programming</div>
+	</div>
+</div>
+<hr />
+
+	<div id="content" class="widecolumn">
+
+	
+		<div class="navigation">
+			<div class="alignleft">&laquo; <a href="index5c7e.html?p=4">Gameboy Timing and Timers</a></div>
+			<div class="alignright"><a href="indexc4f7.html?p=7">Quick Emulator Update</a> &raquo;</div>
+		</div>
+
+		<div class="post" id="post-6">
+			<h2>Divider Register</h2>
+
+			<div class="entry">
+				<p>This is very similar to the Timer register (TIMA) only much easier. The divider register (DIV) is located at memory address 0xFF04 and one of its uses is to supply a seed for a random number generator in games. You can test this by not emulating the divider register and then playing tetris. You will notice that the only object you are given in tetris is the square block which makes the game a bit easy. The register increments itself through values of 0-255 and starts back at 0 again when going one higher than 255. You need to intercept the write to the DIV address. When the game attempts to write to DIV then DIV is set to 0.</p>
+<p>So how do we emulate this? We need to set up a divider tracer variable which increments the div register at 16384Hz. The clock speed is 4.194304MHz which is 256 times faster than the divider register. So each timer the cpu does 256 clock cycles the div register gets incremented.</p>
+<p>This gives the following emulation code needed to implement the divider register:</p>
+<p>click <a href="examples/divider.txt">here</a> for a text version of the divider example. As usual feel free to comment on any questions you have or any problems you see with the code.</p>
+
+								
+				<p class="postmetadata alt">
+					<small>
+						This entry was posted
+												on Wednesday, July 16th, 2008 at 8:08 pm						and is filed under <a href="index81ea.html?cat=3" title="View all posts in Gameboy" rel="category">Gameboy</a>.
+						You can follow any responses to this entry through the <a href='index1d26.html?feed=rss2&amp;p=6'>RSS 2.0</a> feed.
+
+													You can <a href="#respond">leave a response</a>, or <a href="index42dc.html?p=6" rel="trackback">trackback</a> from your own site.
+
+						
+					</small>
+				</p>
+
+			</div>
+		</div>
+
+	
+<!-- You can start editing here. -->
+
+
+			<!-- If comments are open, but there are no comments. -->
+
+	 
+
+
+<h3 id="respond">Leave a Reply</h3>
+
+
+<form action="http://codeslinger.co.uk/pages/blog/wordpress/wp-comments-post.php" method="post" id="commentform">
+
+
+<p><input type="text" name="author" id="author" value="" size="22" tabindex="1" />
+<label for="author"><small>Name (required)</small></label></p>
+
+<p><input type="text" name="email" id="email" value="" size="22" tabindex="2" />
+<label for="email"><small>Mail (will not be published) (required)</small></label></p>
+
+<p><input type="text" name="url" id="url" value="" size="22" tabindex="3" />
+<label for="url"><small>Website</small></label></p>
+
+
+<!--<p><small><strong>XHTML:</strong> You can use these tags: <code>&lt;a href=&quot;&quot; title=&quot;&quot;&gt; &lt;abbr title=&quot;&quot;&gt; &lt;acronym title=&quot;&quot;&gt; &lt;b&gt; &lt;blockquote cite=&quot;&quot;&gt; &lt;cite&gt; &lt;code&gt; &lt;del datetime=&quot;&quot;&gt; &lt;em&gt; &lt;i&gt; &lt;q cite=&quot;&quot;&gt; &lt;strike&gt; &lt;strong&gt; </code></small></p>-->
+
+<p><textarea name="comment" id="comment" cols="100%" rows="10" tabindex="4"></textarea></p>
+
+<p><input name="submit" type="submit" id="submit" tabindex="5" value="Submit Comment" />
+<input type="hidden" name="comment_post_ID" value="6" />
+</p>
+
+</form>
+
+
+
+	
+	</div>
+
+
+<hr />
+<div id="footer">
+<!-- If you'd like to support WordPress, having the "powered by" link somewhere on your blog is the best way; it's our only promotion or advertising. -->
+	<p>
+		Emulator Development is proudly powered by
+		<a href="http://wordpress.org/">WordPress</a>
+		<br /><a href="indexd784.html?feed=rss2">Entries (RSS)</a>
+		and <a href="indexa6da.html?feed=comments-rss2">Comments (RSS)</a>.
+		<!-- 19 queries. 0.187 seconds. -->
+	</p>
+</div>
+</div>
+
+<!-- Gorgeous design by Michael Heilemann - http://binarybonsai.com/kubrick/ -->
+
+		</body>
+
+<!-- Mirrored from codeslinger.co.uk/pages/blog/wordpress/?p=6 by HTTrack Website Copier/3.x [XR&CO'2010], Thu, 11 Aug 2011 17:35:02 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8"><!-- /Added by HTTrack -->
+</html>

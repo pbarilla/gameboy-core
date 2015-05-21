@@ -1,0 +1,149 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<!-- Mirrored from www.codeslinger.co.uk/pages/projects/chip8/fetchdecode.html by HTTrack Website Copier/3.x [XR&CO'2010], Thu, 11 Aug 2011 17:34:20 GMT -->
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="description" content="_Emulation Programming_" />
+<meta name="keywords" content="_Emulation,Chip8,Gameboy,NES,SNES,Genesis,Master,System,Mega,Drive_" />
+<meta name="author" content="CodeSlinger /" />
+<link rel="stylesheet" type="text/css" href="../../../css.css" media="screen,projection" title="CodeSlinger (screen)" />
+<link rel="stylesheet" type="text/css" href="../../../print.css" media="print" />
+<title>codeslinger.co.uk</title>
+</head>
+
+<body>
+<div>
+<br><br>
+</div>
+
+<div id="container">
+<div id="logo">
+<h1><a href="../../../index-2.html">codeslinger.co.uk</a></h1>
+</div>
+
+<div id="navitabs">
+<h2 class="hide">Site menu:</h2>
+<a class="navitab" href="../../../index-3.html">Home</a><span class="hide"> | </span>
+<a class="navitab" href="../../basics.html">Basics</a><span class="hide"> | </span>
+<a class="navitab" href="../zuko.html">Zuko</a><span class="hide"> | </span>
+<a class="navitab" href="../megadrive.html">Mega Drive/Genesis</a><span class="hide"> | </span>
+<a class="navitab" href="../mastersystem.html">Master System</a><span class="hide"> | </span>
+<a class="navitab" href="../gameboy.html">Gameboy</a><span class="hide"> | </span>
+<a class="activenavitab" href="../chip8.html">Chip8</a><span class="hide"> | </span>
+<a class="navitab" href="../../blog/index.html">Blog</a><span class="hide"> | </span>
+</div>
+	
+<div id="desc">
+<h2>codeslinger.co.uk</h2>
+<p> The chip8 instruction emulation.</p>
+
+</div>
+
+<div id="main">
+<h3><b>Fetch Opcodes:</b> </h3>
+<p>
+
+Opcodes are the instructions that the cpu executes. We get the opcodes from the memory which we initialized in Step1. As stated in step1 the beginning of the game is located at address 0x200 which is where the program counter has been initialized to. So it is this address in memory that we will get the first opcode from. As you have all read the Wikipedia chip8 article you will know that opcodes are 2 bytes long (1 word), however our memory is of size 1 byte. So how do we create 2 byte opcode from an address that is only 1 byte long? The answer is simple. We have to combine the byte located in memory with the byte the next element along in memory. So for instance if byte m_Memory[0x200] is 0xAB and byte m_Memory[0x201] is 0xCB we combine them to form 1 word, which is the opcode. So the opcode would be 0xABCD<br><br>
+
+In binary the value 0xAB is 10101011 and the value 0xCD is 11001101 so we need to combine them to form 0xABCD which is 1010101111001101. As you can see the first byte (0xAB) has been shifted across 8 places to make room for the second byte(0xCD). So what we do is shift 0xAB left 8 times which will give 1010101100000000 (0xAB00)we then logically or this result with 0xCB which will give 1010101111001101. So to form an opcode from memory you do the following:<br><br>
+
+<p class="code"> 
+
+WORD GetNextOpcode( )<br>
+{<br>
+   WORD res = 0 ;<br>
+   res = m_GameMemory[m_ProgramCounter] ; // in example res is 0xAB<br>
+   res <<= 8 ; // shift 8 bits left. In our example res is 0xAB00<br>
+   res |= m_GameMemory[m_ProgramCounter+1] ; In example res is 0xABCD<br>
+   m_ProgramCounter+=2 ; <br>
+   return res ;<br>
+}
+
+</p>
+
+As you can see from the code the program counter gets incremented twice. The reason for this is that we now know what this opcode is (res) so we move the program counter (also called the instruction pointer) onto the next instruction. The reason why it is incremented twice remember is because an opcode is 2 bytes long.
+
+</p>
+
+<h3><b>Decode Opcode:</b> </h3>
+<p>
+
+So now we have a function to return the next opcode but what do we do with it? Well we have to decode it to see which instruction we have to execute. Load up <a href="http://en.wikipedia.org/wiki/CHIP-8">wikipedia</a> again and look at the opcode table. The first number of the opcode will dictate what instruction needs to be executed. For example if you took the first number of the opcode and it was number 1, we can see from the opcode table we should jump to position NNN. So opcode 0x1234 would mean change program counter to 0x234. However around 50% of the opcodes share the same first number. For example if the first number was 0 then it could be opcode 00E0 or 00EE, so that means we have to then split the opcode up further by looking at number 4. If number 4 is a 0 then it is opcode 00E0 which means clear the screen. Otherwise if number 4 is an E it must be opcode 00EE which returns from a subroutine. But how do we get the specific numbers of the opcode? Thats simple, we just logical AND the opcode with 0xF for the position we want:
+
+<p class="code"> 
+
+WORD opcode = GetNextOpcode( ) ; // assume this returns 0x1234<br>
+WORD firstNumber = opcode & 0xF000 ; // would give 0x1000<br>
+WORD secondNumber = opcode & 0x0F00 ; // would give 0x0200<br>
+WORD secondAndLast = opcode & 0x0F0F ; // would give 0x0204<br>
+WORD lastTwoNumbers = opcode & 0x00FF ; // would give 0x0034<br>
+
+</p>
+
+So now we have a way of decoding the opcode. All we have to do now is call the function that is linked to that opcode. There are three ways we can do this, we can either use a big if else if statement. Or a switch statement. Or an array of function pointers. You should never use the first option which is the if else if statement. This is because it can be quite slow to execute. The most common option is the switch statement. So this will give us something that looks like this: <br><br>
+
+<p class="code"> 
+
+WORD opcode = GetNextOpcode( ) ; // assume this returns 0x1234<br><br>
+// decode the opcode<br>
+switch (opcode & 0xF000)<br>
+{<br>
+   case 0x1000: Opcode1NNN(opcode); break ; // jump opcode<br>
+   case 0x0000: // need to break this opcode down further<br>
+   {<br>
+     switch(opcode & 0x000F) <br>
+     {<br>
+       case 0x0000: 0pcode00E0(opcode) ; break // clear screen opcode<br>
+       case 0x000E: Opcode00EE(opcode) ; break // return subroutine<br>
+     }<br>
+   }<br>
+   break ;<br>
+   default : break ; // opcode yet to be handled<br>
+}<br>
+
+</p>
+
+Just to round off this section I'll show you how to implement 1NNN. This opcode is responsible to jumping address NNN like so:<br><br>
+
+<p class="code"> 
+
+void Opcode1NNN(WORD opcode)<br>
+{<br>
+   m_ProgramCounter = opcode & 0x0FFF ; // remember we're only interested in NNN of opcode 1NNN<br>	
+}<br>
+
+</p>
+
+Well thats about it for this section. You should now how complete understanding of the fetch and decode loop. Obviously as this is a loop you have to keep fetching and decoding until the player quits. On modern day computers the fetch and decode loop will execute so quick that the chip8 game will need to be slowed down. We'll handle this in step4.<br><br>
+
+</p>
+ 
+
+</div>
+
+<div id="sidebar">
+<h3>Chip8 Emulation:</h3>
+
+<p>
+<a class="sidelink" href="../chip8.html">Getting Started</a><span class="hide"> | </span>
+<a class="sidelink" href="hardware.html">Step 1: The Hardware</a><span class="hide"> | </span>
+<a class="sidelink" href="fetchdecode.html">Step 2: The fetch decode loop</a><span class="hide"> | </span>
+<a class="sidelink" href="examples.html">Step 3: Example opcode emulation</a><span class="hide"> | </span>
+<a class="sidelink" href="primitive.html">Step 4: Timers, Sound and Input</a><span class="hide"> | </span>
+<a class="sidelink" href="mychip8.html">My Finished project</a><span class="hide"> | </span>
+</p>
+
+</div>
+    
+<div id="footer">
+Copyright © 2008 codeslinger.co.uk
+</div>
+
+</div>
+</body>
+
+<!-- Mirrored from www.codeslinger.co.uk/pages/projects/chip8/fetchdecode.html by HTTrack Website Copier/3.x [XR&CO'2010], Thu, 11 Aug 2011 17:34:20 GMT -->
+</html>
+
+

@@ -1,0 +1,45 @@
+//////////////////////////////////////////////////////////////////////////////////////
+
+void CPUEmu::WriteByte(WORD address, BYTE data)
+{
+
+	if (DIV == address)
+
+	{
+		m_GameMemory[DIV] = 0 ;
+		m_DividerTracer = 256 ;
+	}
+
+}
+
+
+//////////////////////////////////////////////////////////////////////////////////////
+
+void CPUEmu::Update( )
+{
+	const int TARGETCYCLES = CLOCKSPEED/FPS ;
+
+	m_CyclesThisUpdate = 0;
+	while (m_CyclesThisUpdate < TARGETCYCLES)
+	{
+		int cycles = ExecuteNextOpcode( ) ;
+		m_CyclesThisUpdate += cycles ;
+
+		DoDivider(cycles) ;
+	}
+}
+
+//////////////////////////////////////////////////////////////////////////////////////
+
+void CPUEmu::DoDivider( int cycles )
+{
+	m_DividerTracer -= cycles ;
+
+	if (m_DividerTracer <= 0)
+	{
+		m_GameMemory[DIV]++;
+		m_DividerTracer = 256 ;
+	}
+}
+
+//////////////////////////////////////////////////////////////////////////////////////

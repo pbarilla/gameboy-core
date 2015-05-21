@@ -1,0 +1,183 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" dir="ltr">
+
+<head profile="http://gmpg.org/xfn/11">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+<title>Emulator Development   &raquo; 2008&raquo; September</title>
+
+<link rel="stylesheet" href="wp-content/themes/default/style.css" type="text/css" media="screen" />
+<link rel="alternate" type="application/rss+xml" title="Emulator Development RSS Feed" href="indexd784.html?feed=rss2" />
+<link rel="pingback" href="xmlrpc.html" />
+
+<style type="text/css" media="screen">
+
+	#page { background: url("wp-content/themes/default/images/kubrickbgwide.jpg") repeat-y top; border: none; }
+
+</style>
+
+<link rel="EditURI" type="application/rsd+xml" title="RSD" href="xmlrpc0db0.php?rsd" />
+<link rel="wlwmanifest" type="application/wlwmanifest+xml" href="wp-includes/wlwmanifest.xml" /> 
+<meta name="generator" content="WordPress 2.5.1" />
+
+</head>
+<body>
+<div id="page">
+
+
+<div id="header">
+	<div id="headerimg">
+		<h1><a href="index.html">Emulator Development</a></h1>
+		<div class="description">The art of emulator programming</div>
+	</div>
+</div>
+<hr />
+
+	<div id="content" class="narrowcolumn">
+
+		
+ 	   	  		<h2 class="pagetitle">Archive for September, 2008</h2>
+ 	  
+
+		<div class="navigation">
+			<div class="alignleft"></div>
+			<div class="alignright"></div>
+		</div>
+
+				<div class="post">
+				<h3 id="post-16"><a href="index0e62-2.html?p=16" rel="bookmark" title="Permanent Link to Progress">Progress</a></h3>
+				<small>Saturday, September 20th, 2008</small>
+
+				<div class="entry">
+					<p>I&#8217;ve had a lot less time available lately to work on my emulator which is why im progressing slower than I thought I would. However I have recently completely fixed scrolling as well as adding tile priorities and the backdrop colour. Zexall complains that there are many bugs in my z80 (all flag related).</p>
+<p>The good news is I&#8217;ve added input emulation which is much simpler than it is on the gameboy. Now sonic is completely playable. I&#8217;ve played up to the third level without anything going wrong which is great. Hopefully I&#8217;ll have time to play it fully to see how far I get. Hopefully the game is completeable.</p>
+<p>Im having luck with a lot of other games too like Alex Kidd which is also playable. Some games like Woody Pop doesnt even show the first screen which I find worrying because I have no idea whats going wrong. If I had to have a stab in the dark I&#8217;d guess that its related to VDP modes which im not handling yet.</p>
+<p>Anyway the rest of the day I&#8217;ll try and make zexall happier with my z80 emulation and maybe look into whats envolved with these vdp modes.</p>
+<p>CS</p>
+				</div>
+
+				<p class="postmetadata"> Posted in <a href="indexaa1e.html?cat=4" title="View all posts in Sega Master System" rel="category">Sega Master System</a> |   <a href="index0e62-2.html?p=16#respond" title="Comment on Progress">No Comments &#187;</a></p>
+
+			</div>
+
+				<div class="post">
+				<h3 id="post-15"><a href="indexa1ca.html?p=15" rel="bookmark" title="Permanent Link to Instruction set update">Instruction set update</a></h3>
+				<small>Monday, September 15th, 2008</small>
+
+				<div class="entry">
+					<p>Hi Guys,</p>
+<p>I have managed to get all of the standard opcodes implemented along with all CB, ED, DDCB and FDCB prefixes. I have a lot of the DD and FD opcodes left to implement though.</p>
+<p>I have improved the scrolling of the background but still got some graphical glitches to iron out.</p>
+<p>The good news is that I have had massive improvement in the amount of games showing their first screen (mainly because I&#8217;ve implemented the ED and DDCB opcodes). Hopefully when I finish the DD and FD opcodes I should be able to play in game.</p>
+<p>Here are some screenshots of how it&#8217;s looking at the moment. You can see the graphical glitches on Alex Kidd as he has a black box surrounding him. This is either priority or transparency that im not implementing correctly.</p>
+<p><img src="../../../../www.codeslinger.co.uk/pages/projects/mastersystem/images/sonic.png" alt="Sonic" /><br />
+<img src="../../../../www.codeslinger.co.uk/pages/projects/mastersystem/images/phantasy.png" alt="Phantasy Star" /></p>
+<p><img src="../../../../www.codeslinger.co.uk/pages/projects/mastersystem/images/alex.png" alt="Alex Kidd" /></p>
+<p><img src="../../../../www.codeslinger.co.uk/pages/projects/mastersystem/images/ecco.png" alt="Ecco the Dolphin" /></p>
+<p><img src="../../../../www.codeslinger.co.uk/pages/projects/mastersystem/images/columns.png" alt="Columns" /></p>
+				</div>
+
+				<p class="postmetadata"> Posted in <a href="indexaa1e.html?cat=4" title="View all posts in Sega Master System" rel="category">Sega Master System</a> |   <a href="indexa1ca.html?p=15#respond" title="Comment on Instruction set update">No Comments &#187;</a></p>
+
+			</div>
+
+				<div class="post">
+				<h3 id="post-14"><a href="index0b69.html?p=14" rel="bookmark" title="Permanent Link to Zexall">Zexall</a></h3>
+				<small>Friday, September 5th, 2008</small>
+
+				<div class="entry">
+					<p>I havent had much time to work on my emulator over the past week. However I have just managed to get zexall running the first few instructions fine. It breaks when it encounters an opcode I havent implemented which is not suprising <img src='wp-includes/images/smilies/icon_smile.gif' alt=':)' class='wp-smiley' /> </p>
+<p>With zexall working hopefully it wont be long until I have a fully working z80 emulator.</p>
+<p>Heres a screenshot of my emulator running zexall in debug mode (hence slow fps). I have no idea why the first character of the ouput isnt working but that&#8217;ll just be a small bug in my vdp emulation which is far from finished.</p>
+<p><img src="../../../../www.codeslinger.co.uk/pages/projects/mastersystem/images/zexall.png" alt="Zexall" /></p>
+<p>CS</p>
+				</div>
+
+				<p class="postmetadata"> Posted in <a href="indexaa1e.html?cat=4" title="View all posts in Sega Master System" rel="category">Sega Master System</a> |   <a href="index0b69.html?p=14#respond" title="Comment on Zexall">No Comments &#187;</a></p>
+
+			</div>
+
+		
+		<div class="navigation">
+			<div class="alignleft"></div>
+			<div class="alignright"></div>
+		</div>
+
+	
+	</div>
+
+	<div id="sidebar">
+		<ul>
+						<li>
+				<form method="get" id="searchform" action="http://codeslinger.co.uk/pages/blog/wordpress/">
+<div><input type="text" value="" name="s" id="s" />
+<input type="submit" id="searchsubmit" value="Search" />
+</div>
+</form>
+			</li>
+
+			<!-- Author information is disabled per default. Uncomment and fill in your details if you want to use it.
+			<li><h2>Author</h2>
+			<p>A little something about you, the author. Nothing lengthy, just an overview.</p>
+			</li>
+			-->
+
+			 <li>
+
+						<p>You are currently browsing the <a href="index.html">Emulator Development</a> blog archives
+			for September, 2008.</p>
+
+			
+			</li> 
+			
+			<li><h2>Archives</h2>
+				<ul>
+					<li><a href='indexd189.html?m=201005' title='May 2010'>May 2010</a></li>
+	<li><a href='indexc36d.html?m=200905' title='May 2009'>May 2009</a></li>
+	<li><a href='index17e8.html?m=200904' title='April 2009'>April 2009</a></li>
+	<li><a href='index10a5.html?m=200903' title='March 2009'>March 2009</a></li>
+	<li><a href='index8988.html?m=200902' title='February 2009'>February 2009</a></li>
+	<li><a href='index7866.html?m=200812' title='December 2008'>December 2008</a></li>
+	<li><a href='index55f6.html?m=200811' title='November 2008'>November 2008</a></li>
+	<li><a href='indexa7bc.html?m=200810' title='October 2008'>October 2008</a></li>
+	<li><a href='indexe77c.html?m=200809' title='September 2008'>September 2008</a></li>
+	<li><a href='indexcffc.html?m=200808' title='August 2008'>August 2008</a></li>
+	<li><a href='index0e62.html?m=200807' title='July 2008'>July 2008</a></li>
+				</ul>
+			</li>
+
+			<li class="categories"><h2>Categories</h2><ul>	<li class="cat-item cat-item-3"><a href="index81ea.html?cat=3" title="View all posts filed under Gameboy">Gameboy</a> (6)
+</li>
+	<li class="cat-item cat-item-4"><a href="indexaa1e.html?cat=4" title="View all posts filed under Sega Master System">Sega Master System</a> (13)
+</li>
+	<li class="cat-item cat-item-1"><a href="indexb31a.html?cat=1" title="View all posts filed under Uncategorized">Uncategorized</a> (4)
+</li>
+	<li class="cat-item cat-item-5"><a href="indexb946.html?cat=5" title="View all posts filed under Zuko">Zuko</a> (1)
+</li>
+</ul></li>
+			
+					</ul>
+	</div>
+
+
+
+<hr />
+<div id="footer">
+<!-- If you'd like to support WordPress, having the "powered by" link somewhere on your blog is the best way; it's our only promotion or advertising. -->
+	<p>
+		Emulator Development is proudly powered by
+		<a href="http://wordpress.org/">WordPress</a>
+		<br /><a href="indexd784.html?feed=rss2">Entries (RSS)</a>
+		and <a href="indexa6da.html?feed=comments-rss2">Comments (RSS)</a>.
+		<!-- 20 queries. 0.199 seconds. -->
+	</p>
+</div>
+</div>
+
+<!-- Gorgeous design by Michael Heilemann - http://binarybonsai.com/kubrick/ -->
+
+		</body>
+
+<!-- Mirrored from codeslinger.co.uk/pages/blog/wordpress/?m=200809 by HTTrack Website Copier/3.x [XR&CO'2010], Thu, 11 Aug 2011 17:34:49 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8"><!-- /Added by HTTrack -->
+</html>

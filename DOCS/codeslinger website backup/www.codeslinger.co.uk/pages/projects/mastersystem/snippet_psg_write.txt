@@ -1,0 +1,90 @@
+void SN79489::WriteData(BYTE data)
+{
+	// if bit 7 is set the it updates the latch
+	if (TestBit(data,7))
+	{
+
+		// the channel is indentified by the 6 and 5 bits
+		int channel = data ;
+		channel >>= 5 ;
+
+		// turn off top bit
+		channel &= 0x3 ;
+		m_LatchedChannel = (CHANNEL)channel ;
+
+		// if bit 4 is set then the channel we're latching volume, otherwise tone
+		m_IsToneLatched = TestBit(data,4)?false:true ;
+		
+		// bottom 4 bits are the data to be updated
+		BYTE channelData = data & 0xF ;
+
+		if (m_IsToneLatched)
+		{
+			if (m_LatchedChannel == TONES_NOISE)
+			{
+				// noise register is only 4 bits, so you dont need to keep the top nibble (as there isnt one)
+				m_Tones[TONES_NOISE] = channelData ;
+				m_LFSR = 0x8000 ;
+			}
+			else
+			{
+				WORD currentValue = m_Tones[m_LatchedChannel] ;
+
+				// we want to keep the top 12 bits (technically 10 bits) the same value, but replace the bottom 4
+				currentValue &= 0xFFF0 ;
+
+				// update bottom 4 bits
+				currentValue |= channelData ;
+
+				m_Tones[m_LatchedChannel] = currentValue ;
+			}
+		}
+		else
+		{
+			BYTE currentValue = m_Volume[m_LatchedChannel] ;
+
+			// we want to keep the top nibble the same
+			currentValue &= 0xF0 ;
+
+			// update bottom nibble
+			currentValue |= channelData ;
+
+			m_Volume[m_LatchedChannel] = currentValue ;
+		}
+
+	}
+
+	// we're updating the currently latched register
+	else
+	{
+		WORD channelData = 0;
+
+		// the data to update with is the bottom 6 bits of the data being passed in
+		channelData = data & 0x3F ;
+
+		if (m_IsToneLatched)
+		{
+			if (m_LatchedChannel == TONES_NOISE)
+			{
+				m_Tones[TONES_NOISE] = data & 0xF ;
+				m_LFSR = 0x8000 ;
+			}
+			else
+			{
+				WORD currentValue = m_Tones[m_LatchedChannel] ;
+				BYTE currentLowNibble = currentValue & 0xF ;
+
+				// update the top 6 bits (10 bit register) of the channel with the low 6 bits of the data
+				channelData <<= 4 ;
+				
+				// we dont want to modify the low 4 bits of what was previously there
+				channelData |= currentLowNibble;
+				m_Tones[m_LatchedChannel] = channelData ;
+			}
+		}
+		else
+		{		
+			m_Volume[m_LatchedChannel] = data & 0xF ;
+		}
+	}
+}

@@ -1,0 +1,179 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" dir="ltr">
+
+<head profile="http://gmpg.org/xfn/11">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+<title>Emulator Development   &raquo; 2008&raquo; November</title>
+
+<link rel="stylesheet" href="wp-content/themes/default/style.css" type="text/css" media="screen" />
+<link rel="alternate" type="application/rss+xml" title="Emulator Development RSS Feed" href="indexd784.html?feed=rss2" />
+<link rel="pingback" href="xmlrpc.html" />
+
+<style type="text/css" media="screen">
+
+	#page { background: url("wp-content/themes/default/images/kubrickbgwide.jpg") repeat-y top; border: none; }
+
+</style>
+
+<link rel="EditURI" type="application/rsd+xml" title="RSD" href="xmlrpc0db0.php?rsd" />
+<link rel="wlwmanifest" type="application/wlwmanifest+xml" href="wp-includes/wlwmanifest.xml" /> 
+<meta name="generator" content="WordPress 2.5.1" />
+
+</head>
+<body>
+<div id="page">
+
+
+<div id="header">
+	<div id="headerimg">
+		<h1><a href="index.html">Emulator Development</a></h1>
+		<div class="description">The art of emulator programming</div>
+	</div>
+</div>
+<hr />
+
+	<div id="content" class="narrowcolumn">
+
+		
+ 	   	  		<h2 class="pagetitle">Archive for November, 2008</h2>
+ 	  
+
+		<div class="navigation">
+			<div class="alignleft"></div>
+			<div class="alignright"></div>
+		</div>
+
+				<div class="post">
+				<h3 id="post-21"><a href="index3965.html?p=21" rel="bookmark" title="Permanent Link to Debugging an emulator is a pain">Debugging an emulator is a pain</a></h3>
+				<small>Monday, November 10th, 2008</small>
+
+				<div class="entry">
+					<p>Well this week I&#8217;ve entered a world of pain with my emulator debugger. First of all I had to debug street fighter to see why it wasnt working and it turned out that it was relying on the reading of the mapper control registers (0xFFFC-0xFFFF) to return the values of the mapped address of 0xDFFC-0xDFFF. As soon as I put this into the game I had immediate success.</p>
+<p>I finally managed to get mode 2 sprite emulation working which was down to a really stupid error on my part.</p>
+<p>Finally I&#8217;ve been debugging why my code masters larger res screen doesnt work and why the graphics are screwy in mortal kombat.</p>
+<p>Luckily for me they were both the same error. The error was with my 8 and 16 bit opcodes for adc and sbc. Now this is how I emulated 8 bit adc (for when adding register c to register a):</p>
+<blockquote><p><em>BYTE before = m_RegisterAF.hi ;<br />
+BYTE toAdd = m_RegisterBC.lo ;</em></p>
+<p><em>if (isCarrySet)<br />
+toAdd++ ;</em></p>
+<p><em>m_RegisterAF.hi += toAdd ;</em></p>
+<p><em>if ((before + toAdd) &gt; 0xFF)<br />
+SetCarryFlag() ;<br />
+else<br />
+ResetCarryFlag() ;</em></p>
+<p><em>// code to work out the other flags </em></p></blockquote>
+<p>Can you spot whats wrong with the above code?</p>
+<p>Solution:<br />
+At first glance this looks fine however think what would happen if register C was 0xFF? When the carry gets added the toAdd variable wraps back round to 0. So register a stays set to 0xFF which is correct, however the setting of the c flag never gets set. This was causing the following instruction in mortal kombat (jump if carry is set) to fail.</p>
+<p>That took me ages to find!</p>
+<p>However both mortal kombat and micro machines are playable. My main concern now is why half of the games I play suffer from graphic flicker&#8230;. Better get my debugger back out.</p>
+<p>Fortunately this is the last of the big bugs that need debugging and then it&#8217;s on to sound emulation (oh joy). However the end feels just round the corner.</p>
+<p>CS</p>
+				</div>
+
+				<p class="postmetadata"> Posted in <a href="indexaa1e.html?cat=4" title="View all posts in Sega Master System" rel="category">Sega Master System</a> |   <a href="index3965.html?p=21#respond" title="Comment on Debugging an emulator is a pain">No Comments &#187;</a></p>
+
+			</div>
+
+				<div class="post">
+				<h3 id="post-20"><a href="index341b.html?p=20" rel="bookmark" title="Permanent Link to Testing does not prove the absence of bugs, only the presence">Testing does not prove the absence of bugs, only the presence</a></h3>
+				<small>Sunday, November 2nd, 2008</small>
+
+				<div class="entry">
+					<p>If any of you are writing a Z80 emulator then take it from me dont rely on zexall too much. If zexalls output says you have a bug then you most definately do. However if it says that the test went ok it doesnt mean that they are bug free.</p>
+<p>I managed to fix a bug in my emulator without zexalls help which was causing a few games to display the background incorrectly. Mainly Lemmings and Land of Illusion. This bug has been haunting me for awhile so im quite relieved to have fixed it.</p>
+<p>I have recently found out that some games run at the wrong speed with my emulator so after checking all my opcodes to see if they are emulating their cycles correctly I was left with the conclusion it must be an error with my vsync emultion. Sure enough I wasnt moving on to the next scanline quick enough which was causing too few vsync interrupts to occur which is one of the main way speed is controlled in games. This is now fixed (after a day of headache) and all games play at the correct speed ( or should I say all tested games? <img src='wp-includes/images/smilies/icon_smile.gif' alt=':)' class='wp-smiley' /> )</p>
+<p>Over the past few days I have also emulated the none maskable reset interrupt, the different screen resolution controlled by the current vdp mode and the codemasters mapper. Although the codemasters mapper is implemented correctly the majority of the games show issues with background rendering. However I believe this to be a problem with the background rendering routine rather than the mapper iteself because there is not much room for error with the mapper (compared to the sega mapper anyway).</p>
+<p><img src="../../../../www.codeslinger.co.uk/pages/projects/mastersystem/images/lemmings.png" alt="" /></p>
+<p>CS</p>
+				</div>
+
+				<p class="postmetadata"> Posted in <a href="indexaa1e.html?cat=4" title="View all posts in Sega Master System" rel="category">Sega Master System</a> |   <a href="index341b.html?p=20#respond" title="Comment on Testing does not prove the absence of bugs, only the presence">No Comments &#187;</a></p>
+
+			</div>
+
+		
+		<div class="navigation">
+			<div class="alignleft"></div>
+			<div class="alignright"></div>
+		</div>
+
+	
+	</div>
+
+	<div id="sidebar">
+		<ul>
+						<li>
+				<form method="get" id="searchform" action="http://codeslinger.co.uk/pages/blog/wordpress/">
+<div><input type="text" value="" name="s" id="s" />
+<input type="submit" id="searchsubmit" value="Search" />
+</div>
+</form>
+			</li>
+
+			<!-- Author information is disabled per default. Uncomment and fill in your details if you want to use it.
+			<li><h2>Author</h2>
+			<p>A little something about you, the author. Nothing lengthy, just an overview.</p>
+			</li>
+			-->
+
+			 <li>
+
+						<p>You are currently browsing the <a href="index.html">Emulator Development</a> blog archives
+			for November, 2008.</p>
+
+			
+			</li> 
+			
+			<li><h2>Archives</h2>
+				<ul>
+					<li><a href='indexd189.html?m=201005' title='May 2010'>May 2010</a></li>
+	<li><a href='indexc36d.html?m=200905' title='May 2009'>May 2009</a></li>
+	<li><a href='index17e8.html?m=200904' title='April 2009'>April 2009</a></li>
+	<li><a href='index10a5.html?m=200903' title='March 2009'>March 2009</a></li>
+	<li><a href='index8988.html?m=200902' title='February 2009'>February 2009</a></li>
+	<li><a href='index7866.html?m=200812' title='December 2008'>December 2008</a></li>
+	<li><a href='index55f6.html?m=200811' title='November 2008'>November 2008</a></li>
+	<li><a href='indexa7bc.html?m=200810' title='October 2008'>October 2008</a></li>
+	<li><a href='indexe77c.html?m=200809' title='September 2008'>September 2008</a></li>
+	<li><a href='indexcffc.html?m=200808' title='August 2008'>August 2008</a></li>
+	<li><a href='index0e62.html?m=200807' title='July 2008'>July 2008</a></li>
+				</ul>
+			</li>
+
+			<li class="categories"><h2>Categories</h2><ul>	<li class="cat-item cat-item-3"><a href="index81ea.html?cat=3" title="View all posts filed under Gameboy">Gameboy</a> (6)
+</li>
+	<li class="cat-item cat-item-4"><a href="indexaa1e.html?cat=4" title="View all posts filed under Sega Master System">Sega Master System</a> (13)
+</li>
+	<li class="cat-item cat-item-1"><a href="indexb31a.html?cat=1" title="View all posts filed under Uncategorized">Uncategorized</a> (4)
+</li>
+	<li class="cat-item cat-item-5"><a href="indexb946.html?cat=5" title="View all posts filed under Zuko">Zuko</a> (1)
+</li>
+</ul></li>
+			
+					</ul>
+	</div>
+
+
+
+<hr />
+<div id="footer">
+<!-- If you'd like to support WordPress, having the "powered by" link somewhere on your blog is the best way; it's our only promotion or advertising. -->
+	<p>
+		Emulator Development is proudly powered by
+		<a href="http://wordpress.org/">WordPress</a>
+		<br /><a href="indexd784.html?feed=rss2">Entries (RSS)</a>
+		and <a href="indexa6da.html?feed=comments-rss2">Comments (RSS)</a>.
+		<!-- 20 queries. 0.195 seconds. -->
+	</p>
+</div>
+</div>
+
+<!-- Gorgeous design by Michael Heilemann - http://binarybonsai.com/kubrick/ -->
+
+		</body>
+
+<!-- Mirrored from codeslinger.co.uk/pages/blog/wordpress/?m=200811 by HTTrack Website Copier/3.x [XR&CO'2010], Thu, 11 Aug 2011 17:34:48 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8"><!-- /Added by HTTrack -->
+</html>

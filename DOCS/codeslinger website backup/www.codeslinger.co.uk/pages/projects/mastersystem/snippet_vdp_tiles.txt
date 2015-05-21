@@ -1,0 +1,180 @@
+void TMS9918A::RenderBackgroundMode4()
+{
+	WORD nameBase = GetNameBase( ) ;
+ 	int vCounter = m_VCounter ;
+ 	BYTE vScroll = m_VScroll ; // v scrolling only gets updated outside active display
+ 	BYTE hScroll = m_VDPRegisters[0x8] ;
+
+ 	BYTE vStartingRow = vScroll >> 3 ;
+ 	BYTE vFineScroll = vScroll & 0x7 ;
+ 	BYTE hStartingCol = hScroll >> 3 ;
+ 	BYTE hFineScroll = hScroll & 0x7 ;
+
+	// the following will stop horizontal scrolling and vertical scrolling for the top column and left column of display
+ 	bool limitVScroll = IsRegBitSet(0, 7) ;
+ 	bool limitHScroll = IsRegBitSet(0, 6) ;
+
+	// a row is 8 pixels large
+	int row = vCounter ;
+	row /= 8 ;
+
+	// will we be setting the first column to the backdrop colour?
+	bool maskFirstColumn = IsRegBitSet(0,5) ;
+
+	// draw all 32 columns for this scanline (we only actually draw a pixel of the current column which is the scanline)
+	for (int column = 0; column < 32; column++)
+	{
+		// draw all 8 pixels in the column
+		int invert = 7 ; // this is used for the colour index
+		for (int x = 0; x < 8; x++, invert--)
+		{
+			int xpixel = x ;			
+			
+			// allow scrolling if we are not drawing the first column or limitHScroll is not set
+			bool allowhscroll = ((row > 1) || !limitHScroll)?true:false ;
+
+			// i is set to the actual pixel on the screen. Each column is 8 pixels
+			int i = x ;
+			i += column * 8 ;
+
+			// x pos will be the actual pixel to draw on screen
+			int xpos = i ;
+
+			// change xpos to appropriate value if allowing horizontal scrolling
+			if (allowhscroll)
+			{
+				xpos = hStartingCol ; // set to horiztonal staring column
+				xpos *= 8 ; // each column is 8 pixels
+				xpos += xpixel + hFineScroll; // add fine scroll value and current pixel
+				xpos = xpos % m_Width ; // if goes over width then wrap
+			}			
+
+			// only allow vertical scrolling if not drawing columns 24 to 32 if limitVScroll is set
+			bool allowvscroll = (((xpos/8) > 23) && limitVScroll)?false:true ;
+
+			int vrow = row ;
+
+			// modifiy vrow to take into account vertical scrolling
+			if (allowvscroll)
+			{
+				// add on the starting row value
+				vrow += vStartingRow ;
+				
+				// with addition of vFineScroll it may move us to next row.
+				int bumpRow = vCounter % 8 ;
+				if ((bumpRow + vFineScroll) > 7)
+					vrow++ ;
+
+				// wrap if going over max rows
+				int mod = (m_Height == NUM_RES_VERTICAL)?28:32 ;
+				vrow = vrow % mod;
+			}			
+
+			int col = column ;
+			
+			// get correct position in memory for this tile
+			WORD nameBaseOffset = nameBase ;
+			nameBaseOffset += vrow * 64 ; //each scanline has 32 tiles (1 tile per column) but 1 tile is 2 bytes in memory
+			nameBaseOffset += col * 2 ; // each tile is two bytes in memory
+
+			// get tile information data from memory
+			WORD tileData = m_VRAM[nameBaseOffset+1] << 8 ;
+			tileData |= m_VRAM[nameBaseOffset] ;
+
+			bool hiPriority = TestBit(tileData,12) ;
+			bool useSpritePalette = TestBit(tileData,11) ;
+			bool vertFlip = TestBit(tileData,10) ;
+			bool horzFlip = TestBit(tileData,9) ;
+			WORD tileDefinition = tileData & 0x1FF ;
+
+			// offset will point to which line of the pattern to draw
+			int offset = vCounter; ;			
+
+			// move offset if allowingvscroll
+			if (allowvscroll)
+				offset += vScroll ;
+
+			// a tile is 8 pixels, so wrap if gone past
+			offset = offset % 8 ;
+
+			// if flipping vertically then invert offset
+			if (vertFlip)
+			{
+				offset *= -1 ;
+				offset += 7 ;
+			}
+
+			// each pattern  is 32 bytes in memory
+   			tileDefinition *= 32 ;
+   			
+   			// each pattern line if 4 bytes. Offset contains correct pattern line
+   			tileDefinition += 4 * offset;  
+  
+  			// get pattern line data
+    			BYTE data1 = m_VRAM[tileDefinition] ;
+    			BYTE data2 = m_VRAM[tileDefinition+1] ;
+    			BYTE data3 = m_VRAM[tileDefinition+2] ;
+    			BYTE data4 = m_VRAM[tileDefinition+3] ;
+
+			int colourbit = invert ;
+			
+			// if horizontal flip then read from right to left
+			if (horzFlip)
+			{
+				colourbit = x ;
+			}					
+
+			// get which palette for this pattern line
+			BYTE palette = 0 ;
+	   		BYTE bit = BitGetVal(data4,colourbit) ;
+	   		palette = (bit << 3) ;
+	   		bit = BitGetVal(data3,colourbit) ;
+	   		palette |= (bit << 2) ;
+	   		bit = BitGetVal(data2,colourbit) ;
+	   		palette |= (bit << 1) ;
+	   		bit = BitGetVal(data1, colourbit) ;
+	   		palette |= bit ;
+
+			bool masking = false ;
+
+			// only mask if left column
+			if ((xpos < 8) && maskFirstColumn)
+			{
+				masking = true ;
+				// palette is set to backgrop colour specified in reg 7
+				palette = m_VDPRegisters[0x7] & 15 ;
+				// backdrop colour uses the sprite palette
+				useSpritePalette = true ;
+			}
+
+			// a tile can only have a high priority if it isnt palette 0
+			// if this doesnt work try chaning the if statement to if(palette == (m_VDPRegisters[0x7] & 15))
+			if (palette == 0)
+				hiPriority = false ;
+	  
+	   		if (useSpritePalette)
+	   			palette+=16 ;
+	  
+	   		BYTE colour = m_CRAM[palette] ;
+				  
+			// split colour into RGB components
+	   		BYTE red = colour & 0x3 ;
+	   		colour >>=2 ;
+	   		BYTE green = colour & 0x3 ;
+	   		colour >>=2 ;
+	   		BYTE blue = colour & 0x3 ;		
+
+			// a sprite is drawn here so lets not overwrite it :)
+			if (!masking && !hiPriority && (GetScreenPixelColour(xpos,m_VCounter,0) != SCREENBLANKCOLOUR))
+				continue ;
+	  
+	  		// dont go over edge of screen
+			if (xpos >= NUM_RES_HORIZONTAL)
+				continue ;
+
+			WriteToScreen(xpos,vCounter,GetColourShade(red),GetColourShade(green),GetColourShade(blue)) ;
+		}
+		// move starting col onto next column after drawing a column
+		hStartingCol = (hStartingCol + 1) % 32 ;
+	}
+}

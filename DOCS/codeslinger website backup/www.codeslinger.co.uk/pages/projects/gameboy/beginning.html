@@ -1,0 +1,164 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<!-- Mirrored from www.codeslinger.co.uk/pages/projects/gameboy/beginning.html by HTTrack Website Copier/3.x [XR&CO'2010], Thu, 11 Aug 2011 17:34:16 GMT -->
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="description" content="_Emulation Programming_" />
+<meta name="keywords" content="_Emulation,Chip8,Gameboy,NES,SNES,Genesis,Master,System,Mega,Drive_" />
+<meta name="author" content="CodeSlinger /" />
+<link rel="stylesheet" type="text/css" href="../../../css.css" media="screen,projection" title="CodeSlinger (screen)" />
+<link rel="stylesheet" type="text/css" href="../../../print.css" media="print" />
+<title>codeslinger.co.uk</title>
+</head>
+
+<body>
+<div>
+<br><br>
+</div>
+
+<div id="container">
+<div id="logo">
+<h1><a href="../../../index-2.html">codeslinger.co.uk</a></h1>
+</div>
+
+<div id="navitabs">
+<h2 class="hide">Site menu:</h2>
+<a class="navitab" href="../../../index-3.html">Home</a><span class="hide"> | </span>
+<a class="navitab" href="../../basics.html">Basics</a><span class="hide"> | </span>
+<a class="navitab" href="../zuko.html">Zuko</a><span class="hide"> | </span>
+<a class="navitab" href="../megadrive.html">Mega Drive/Genesis</a><span class="hide"> | </span>
+<a class="navitab" href="../mastersystem.html">Master System</a><span class="hide"> | </span>
+<a class="activenavitab" href="../gameboy.html">Gameboy</a><span class="hide"> | </span>
+<a class="navitab" href="../chip8.html">Chip8</a><span class="hide"> | </span>
+<a class="navitab" href="../../blog/index.html">Blog</a><span class="hide"> | </span>
+</div>
+	
+<div id="desc">
+<h2>codeslinger.co.uk</h2>
+<p> Gameboy - Getting Started.</p>
+
+</div>
+
+<div id="main">
+
+<h3><b>Type definitions:</b> </h3>
+<p>
+Like all machines the gameboy uses data types of different sizes, mainly bytes (8 bits) and words (16 bits). The z80-like instruction set also uses signed bytes and signed words. So
+to make understanding of the code easier I have typedef'd these to give the following:
+
+<p class="code"> 
+typedef unsigned char BYTE ;<br>
+typedef char SIGNED_BYTE ;<br>
+typedef unsigned short WORD ; <br>
+typedef signed short SIGNED_WORD ;<br>
+</p>
+
+I highly recommend you do the same as it makes understanding what value range a variable can store easier to understand and to track down any overflow errors.
+
+</p>
+
+<h3><b>Loading In The Game:</b> </h3>
+<p>
+
+The maximum size of a gameboy rom is 0x200000 bytes so if we have an array of this size then this is where we can store the game. This array will represent
+the gameboy cartride.
+As you will read in the section called "Memory Control and Map" the internal gameboy memory only stores the first 0x8000 bytes of the cartride in memory and the rest is left
+in the cartridge (the emulator will have to swap data in and out the cartride to memory as needed)<br><br>
+
+Declaration of cartridge memory:
+
+<p class="code"> 
+BYTE m_CartridgeMemory[0x200000] ;
+</p>
+
+Loading a game into cartridge memoy:
+
+
+<p class="code"> 
+memset(m_CartridgeMemory,0,sizeof(m_CartridgeMemory)) ;<br><br>
+
+FILE *in;<br>
+in = fopen( "Tetris.gb", "rb" );<br>
+fread(m_CartridgeMemory, 1, 0x200000, in);<br>
+fclose(in);
+</p>
+
+
+</p>
+
+<h3><b>The Emulation Loop:</b> </h3>
+<p>
+Unlike the chip8 the gameboy timing is well documented and it is crucial that the speed of the gameboy is emulated correctly. The <a href="files/GB.pdf"> gameboy document</a>
+that I'm hosting gives the timing in clock cycles for each opcode. So if we know how many clock cycles each instruction takes on the original gameboy hardware we can
+add this to a running counter to keep track of timing. One of the main benefits in keeping a track of how long each instruction takes is we can synchronize this with the
+graphic emulation and the gameboy clock timers to emulate these at the same rate as the cpu.<br><br>
+
+I use SDL for my graphic emulation and this comes with functionality to limit the frame rate of the emulator. I have chosen to limit the frame rate to 60 frames per second, the
+reason for this is the gameboy refreshes the screen 60 times a second. According to game <a href="http://nocash.emubase.de/pandocs.htm">pan docs site</a> the amount of clock cycles
+the gameboy can exectue every second is 4194304 which means that if each frame we update the emulator 60 times a second the each frame will execute 69905(4194304/60) clock cycles. This will
+ensure the emulator is run at the correct speed.
+
+<p class="code"> 
+
+void Emulator::Update( )<br>
+{<br>
+  const int MAXCYCLES = 69905 ;<br>
+  int cyclesThisUpdate = 0 ; <br><br>
+
+  while (cyclesThisUpdate < MAXCYCLES)<br>
+  {<br>
+     int cycles = ExecuteNextOpcode( ) ; <br>
+     cyclesThisUpdate+=cycles ;<br>
+     UpdateTimers(cycles) ; <br>
+     UpdateGraphics(cycles) ; <br>
+     DoInterupts( ) ;<br>
+  }<br>
+
+RenderScreen( ) ;<br>
+}
+</p>
+
+So if the above function is called 60 times a second then RenderScreen is also called 60 times a second which is the same as the gameboy. The while loop
+ensures that the correct amount of instructions is being executed this frame (assuming of course that the function ExecuteNextOpcode is returning the
+correct clock cycles the next opcode took to execute). Also the timers and graphics are being passed how many clock cycles the opcode took so they can update
+at the same rate as the cpu. After every instruction the interupts need to be checked and if needed then processed.
+<br><br>
+</p>
+
+
+
+</div>
+
+<div id="sidebar">
+<h3>Gameboy Emulation:</h3>
+
+<p>
+<a class="sidelink" href="beginning.html">Getting Started</a><span class="hide"> | </span>
+<a class="sidelink" href="hardware.html">The Hardware</a><span class="hide"> | </span>
+<a class="sidelink" href="memory.html">Memory Control and Map</a><span class="hide"> | </span>
+<a class="sidelink" href="banking.html">ROM and RAM Banking</a><span class="hide"> | </span>
+<a class="sidelink" href="timers.html">The Timers</a><span class="hide"> | </span>
+<a class="sidelink" href="interupts.html">Interupts</a><span class="hide"> | </span>
+<a class="sidelink" href="lcd.html">LCD</a><span class="hide"> | </span>
+<a class="sidelink" href="dma.html">DMA Transfer</a><span class="hide"> | </span>
+<a class="sidelink" href="graphics.html">Graphic Emulation</a><span class="hide"> | </span>
+<a class="sidelink" href="joypad.html">Joypad Emulation</a><span class="hide"> | </span>
+<a class="sidelink" href="opcodes.html">Opcode Examples</a><span class="hide"> | </span>
+<a class="sidelink" href="finished.html">Finished Product</a><span class="hide"> | </span>
+
+</p>
+
+</div>
+    
+<div id="footer">
+Copyright © 2008 codeslinger.co.uk
+</div>
+
+</div>
+</body>
+
+<!-- Mirrored from www.codeslinger.co.uk/pages/projects/gameboy/beginning.html by HTTrack Website Copier/3.x [XR&CO'2010], Thu, 11 Aug 2011 17:34:16 GMT -->
+</html>
+
+

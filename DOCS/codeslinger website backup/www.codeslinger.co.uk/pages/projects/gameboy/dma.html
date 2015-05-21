@@ -1,0 +1,125 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<!-- Mirrored from www.codeslinger.co.uk/pages/projects/gameboy/dma.html by HTTrack Website Copier/3.x [XR&CO'2010], Thu, 11 Aug 2011 17:34:18 GMT -->
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="description" content="_Emulation Programming_" />
+<meta name="keywords" content="_Emulation,Chip8,Gameboy,NES,SNES,Genesis,Master,System,Mega,Drive_" />
+<meta name="author" content="CodeSlinger /" />
+<link rel="stylesheet" type="text/css" href="../../../css.css" media="screen,projection" title="CodeSlinger (screen)" />
+<link rel="stylesheet" type="text/css" href="../../../print.css" media="print" />
+<title>codeslinger.co.uk</title>
+</head>
+
+<body>
+<div>
+<br><br>
+</div>
+
+<div id="container">
+<div id="logo">
+<h1><a href="../../../index-2.html">codeslinger.co.uk</a></h1>
+</div>
+
+<div id="navitabs">
+<h2 class="hide">Site menu:</h2>
+<a class="navitab" href="../../../index-3.html">Home</a><span class="hide"> | </span>
+<a class="navitab" href="../../basics.html">Basics</a><span class="hide"> | </span>
+<a class="navitab" href="../zuko.html">Zuko</a><span class="hide"> | </span>
+<a class="navitab" href="../megadrive.html">Mega Drive/Genesis</a><span class="hide"> | </span>
+<a class="navitab" href="../mastersystem.html">Master System</a><span class="hide"> | </span>
+<a class="activenavitab" href="../gameboy.html">Gameboy</a><span class="hide"> | </span>
+<a class="navitab" href="../chip8.html">Chip8</a><span class="hide"> | </span>
+<a class="navitab" href="../../blog/index.html">Blog</a><span class="hide"> | </span>
+</div>
+	
+<div id="desc">
+<h2>codeslinger.co.uk</h2>
+<p> Gameboy - DMA</p>
+
+</div>
+
+<div id="main">
+
+<h3><b>Direct Memory Access:</b></h3>
+<p>
+
+As explained in the <a href="lcd.html">LCD</a> chapter the CPU can only access the Sprite Attributes table during the duration of one of the LCD modes (mode 2).
+The Direct Memory Access (DMA) is a way of copying data to the sprite RAM at the appropriate time removing all responsibility from the main program.<br><br>
+
+The game launches a DMA when it attempts to write to memory address 0xFF46 so we need to add the following to WriteMemory to trap writing to this address:
+
+<p class = "code">
+else if (address == 0xFF46)<br>
+{<br>
+   DoDMATransfer(data) ;<br>
+}
+</p>
+ 
+
+</p>
+
+<h3><b>Implementation of the DMA Transfer:</b> </h3>
+<p>
+The code behind the DMA transfer is really very simple but to understand what is needed can be a little tricky.
+
+As mentioned earlier the destination address of the DMA is the sprite RAM between memory adddress (0xFE00-0xFE9F)
+which means that a total of 0xA0 bytes will be copied to this region. The source address is represented by the
+data being written to address 0xFF46 except this value is the source address divided by 100. So to get the correct
+start address it is the data being written to * 100 (to make it faster instead of multiplying by 100 we will shift left
+8 places, it is the same thing). Now we have all the information to write the DoDMATransfer function like so:
+
+<p class = "code">
+void Emulator::DoDMATransfer(BYTE data)<br>
+{<br>
+   WORD address = data << 8 ; // source address is data * 100<br>
+   for (int i = 0 ; i < 0xA0; i++)<br>
+   {<br>
+     WriteMemory(0xFE00+i, ReadMemory(address+i)) ;<br>
+   }<br>
+}
+</p>
+
+Thats all there is to DMA. The next chapter is on <a href"graphics.html">Graphics Emulation</a>. You may want to grab
+a sandwich and a coke before you start that one.
+
+<br><br>
+</p>
+
+
+
+</div>
+
+<div id="sidebar">
+<h3>Gameboy Emulation:</h3>
+
+<p>
+<a class="sidelink" href="beginning.html">Getting Started</a><span class="hide"> | </span>
+<a class="sidelink" href="hardware.html">The Hardware</a><span class="hide"> | </span>
+<a class="sidelink" href="memory.html">Memory Control and Map</a><span class="hide"> | </span>
+<a class="sidelink" href="banking.html">ROM and RAM Banking</a><span class="hide"> | </span>
+<a class="sidelink" href="timers.html">The Timers</a><span class="hide"> | </span>
+<a class="sidelink" href="interupts.html">Interupts</a><span class="hide"> | </span>
+<a class="sidelink" href="lcd.html">LCD</a><span class="hide"> | </span>
+<a class="sidelink" href="dma.html">DMA Transfer</a><span class="hide"> | </span>
+<a class="sidelink" href="graphics.html">Graphic Emulation</a><span class="hide"> | </span>
+<a class="sidelink" href="joypad.html">Joypad Emulation</a><span class="hide"> | </span>
+<a class="sidelink" href="opcodes.html">Opcode Examples</a><span class="hide"> | </span>
+<a class="sidelink" href="finished.html">Finished Product</a><span class="hide"> | </span>
+
+</p>
+
+</div>
+    
+<div id="footer">
+Copyright © 2008 codeslinger.co.uk
+</div>
+
+</div>
+</body>
+
+<!-- Mirrored from www.codeslinger.co.uk/pages/projects/gameboy/dma.html by HTTrack Website Copier/3.x [XR&CO'2010], Thu, 11 Aug 2011 17:34:18 GMT -->
+</html>
+
+

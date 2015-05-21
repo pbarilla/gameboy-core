@@ -1,0 +1,96 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<!-- Mirrored from www.codeslinger.co.uk/pages/projects/chip8/primitive.html by HTTrack Website Copier/3.x [XR&CO'2010], Thu, 11 Aug 2011 17:34:21 GMT -->
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="description" content="_Emulation Programming_" />
+<meta name="keywords" content="_Emulation,Chip8,Gameboy,NES,SNES,Genesis,Master,System,Mega,Drive_" />
+<meta name="author" content="CodeSlinger /" />
+<link rel="stylesheet" type="text/css" href="../../../css.css" media="screen,projection" title="CodeSlinger (screen)" />
+<link rel="stylesheet" type="text/css" href="../../../print.css" media="print" />
+<title>codeslinger.co.uk</title>
+</head>
+
+<body>
+<div>
+<br><br>
+</div>
+
+<div id="container">
+<div id="logo">
+<h1><a href="../../../index-2.html">codeslinger.co.uk</a></h1>
+</div>
+
+<div id="navitabs">
+<h2 class="hide">Site menu:</h2>
+<a class="navitab" href="../../../index-3.html">Home</a><span class="hide"> | </span>
+<a class="navitab" href="../../basics.html">Basics</a><span class="hide"> | </span>
+<a class="navitab" href="../zuko.html">Zuko</a><span class="hide"> | </span>
+<a class="navitab" href="../megadrive.html">Mega Drive/Genesis</a><span class="hide"> | </span>
+<a class="navitab" href="../mastersystem.html">Master System</a><span class="hide"> | </span>
+<a class="navitab" href="../gameboy.html">Gameboy</a><span class="hide"> | </span>
+<a class="activenavitab" href="../chip8.html">Chip8</a><span class="hide"> | </span>
+<a class="navitab" href="../../blog/index.html">Blog</a><span class="hide"> | </span>
+</div>
+	
+<div id="desc">
+<h2>codeslinger.co.uk</h2>
+<p> The chip8 timers, sound and input emulation.</p>
+
+</div>
+
+<div id="main">
+<h3><b>Timers:</b> </h3>
+<p>
+Not much is known about the timing behind the Chip8 system which is why games run at different speeds and also why the graphics flicker. The main technique emulator programmers use to get the feel right is to tweak the timing until it works. I usually put the amount of opcodes to execute each second in my emulators ini file so the users can change it so it feels right for their system. Although all chip8 emulators timings are inaccurate this doesnt cause bugs in games unlike all other systems. The way I emulate time is to cap my framerate to 60 frames per second and each 1/60th of a second I update the cpu. The cpu update simply executes the required number of opcodes this particular frame. If the emulator is trying to emulate 600 opcodes a second then the amount of opcodes to emulate each frame is 600/60.<br><br>
+
+The Chip8 has two timers the delay timer and the sound timer. Both count down at a rate of 60Hz (60 times a second) if their values are greater than 0. As explained above I update the emulate once every 1/60th of a second which is perfect for decrementing the timers every update.
+
+</p>
+
+<h3><b>Sound:</b> </h3>
+<p>
+
+
+The Chip8 can only play the one sound which is a beep noise. The sound is played whenever the sound timer is greater than 0. So every time I decrement the sound timer I then check its value to see if it is greater than 0, if so I play a beep sound. This is a really very primitive way of emulating sound. Unfortunately this wont teach you much about real sound emulation which is widely regarded as being the most difficult part of emulation.
+
+</p>
+
+
+<h3><b>Input:</b> </h3>
+<p>
+
+
+The Chip8 has 16 keys ranged 0x0-0xF which the player uses to control the game (obviously). The best way to emulate the keyboard is to have a byte array of 16 emulates (one for each key). The emulator should then map the qwerty keyboard keys to a Chip8 key. For example I map keyboard key 'q' to Chip8 key 0x4. When I detect keyboard key 'q' has been pressed I m_Input[0x4] = 1 and when keyboard key 'q' is released I m_Input[0x4] = 0. It is as simple as that. I use SDL events to detect the pressed and released keys. Click <a href="http://www.pdc.kth.se/~lfo/chip8/CHIP8.htm">here</a> to find the correct mappings of the Chip8 keypad.
+
+</p>
+
+
+</div>
+
+<div id="sidebar">
+<h3>Chip8 Emulation:</h3>
+
+<p>
+<a class="sidelink" href="../chip8.html">Getting Started</a><span class="hide"> | </span>
+<a class="sidelink" href="hardware.html">Step 1: The Hardware</a><span class="hide"> | </span>
+<a class="sidelink" href="fetchdecode.html">Step 2: The fetch decode loop</a><span class="hide"> | </span>
+<a class="sidelink" href="examples.html">Step 3: Example opcode emulation</a><span class="hide"> | </span>
+<a class="sidelink" href="primitive.html">Step 4: Timers, Sound and Input</a><span class="hide"> | </span>
+<a class="sidelink" href="mychip8.html">My Finished project</a><span class="hide"> | </span>
+</p>
+
+</div>
+    
+<div id="footer">
+Copyright © 2008 codeslinger.co.uk
+</div>
+
+</div>
+</body>
+
+<!-- Mirrored from www.codeslinger.co.uk/pages/projects/chip8/primitive.html by HTTrack Website Copier/3.x [XR&CO'2010], Thu, 11 Aug 2011 17:34:21 GMT -->
+</html>
+
+

@@ -1,0 +1,149 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<!-- Mirrored from www.codeslinger.co.uk/pages/projects/chip8/hardware.html by HTTrack Website Copier/3.x [XR&CO'2010], Thu, 11 Aug 2011 17:34:20 GMT -->
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="description" content="_Emulation Programming_" />
+<meta name="keywords" content="_Emulation,Chip8,Gameboy,NES,SNES,Genesis,Master,System,Mega,Drive_" />
+<meta name="author" content="CodeSlinger /" />
+<link rel="stylesheet" type="text/css" href="../../../css.css" media="screen,projection" title="CodeSlinger (screen)" />
+<link rel="stylesheet" type="text/css" href="../../../print.css" media="print" />
+<title>codeslinger.co.uk</title>
+</head>
+
+<body>
+<div>
+<br><br>
+</div>
+
+<div id="container">
+<div id="logo">
+<h1><a href="../../../index-2.html">codeslinger.co.uk</a></h1>
+</div>
+
+<div id="navitabs">
+<h2 class="hide">Site menu:</h2>
+<a class="navitab" href="../../../index-3.html">Home</a><span class="hide"> | </span>
+<a class="navitab" href="../../basics.html">Basics</a><span class="hide"> | </span>
+<a class="navitab" href="../zuko.html">Zuko</a><span class="hide"> | </span>
+<a class="navitab" href="../megadrive.html">Mega Drive/Genesis</a><span class="hide"> | </span>
+<a class="navitab" href="../mastersystem.html">Master System</a><span class="hide"> | </span>
+<a class="navitab" href="../gameboy.html">Gameboy</a><span class="hide"> | </span>
+<a class="activenavitab" href="../chip8.html">Chip8</a><span class="hide"> | </span>
+<a class="navitab" href="../../blog/index.html">Blog</a><span class="hide"> | </span>
+</div>
+	
+<div id="desc">
+<h2>codeslinger.co.uk</h2>
+<p> The chip8 hardware emulation.</p>
+
+</div>
+
+<div id="main">
+<h3><b>Hardware:</b> </h3>
+<p>
+
+So reading the <a href="http://en.wikipedia.org/wiki/CHIP-8">wikipedia</a> entry for chip8 we know that the chip8 system is made of the following:
+
+<ul>
+<li>Memory of 0xFFF bytes</li>
+<li>16 8-Bit data registers, called V0 to VF. VF doubles as the carry flag</li>
+<li>16 Bit address register I which is used to access memory</li>
+<li>16 Bit program counter and a stack</li>
+</ul>
+
+The graphics hardware is discussed at the bottom of this page and sound and timers etc is handled in another area of the site (step 4 of the navigation bar to your right).
+
+</p>
+
+<h3><b>Hardware Emulation:</b> </h3>
+<p>
+
+So to emulate the chip8 we need variables of sizes 8-bit (1 byte) and 16-bits(2 bytes, or 1 word). A type char is 1 byte long and short int is 1 word long which will give us the following typedefs:
+
+
+<p class="block"> typedef unsigned char BYTE;<br>typedef unsigned short int WORD; </p>
+
+We need them to be unsigned so we can hold values of 0 to 255 (for BYTE) instead of -127 to +127. The same goes for the WORD 0 - 65535.<br><br>
+
+We know from our hardware specification that the following variables is what we need to emulate the chip8 hardware:<br><br>
+
+<p class="code"> 
+
+BYTE m_GameMemory[0xFFF] ; // 0xFFF bytes of memory<br>
+BYTE m_Registers[16] ; // 16 registers, 1 byte each<br>
+WORD m_AddressI ; // the 16-bit address register I<br>
+WORD m_ProgramCounter ; // the 16-bit program counter<br>
+std::vector<WORD> m_Stack; // the 16-bit stack<br>
+
+</p>
+
+To really emulate the chip8 there is a stack pointer which points to memory which is used for the subroutine return calls. However this can be just as easily emulated with a vector for return addresses that you can just push and pop variables onto.<br><br>
+
+Now we have our hardware variables it is time to initialize them. Wikipedia says that the game is loaded into memory 0x200 as 0-1FFF is for the interpreter. So all we need to do is load the game into 0x200 and initialize the other variables. Remember that the program counter is the variable used to point to which part of memory we are currently executing so this needs to be set to the first instruction of the game which will be address 0x200
+<br><br>
+<p class="code"> 
+
+void CPUReset( )<br>
+{<br>
+   m_AddressI = 0 ;<br>
+   m_ProgramCounter = 0x200 ;<br>
+   memset(m_Registers,0,sizeof(m_Registers)) ; // set registers to 0<br><br>
+   // load in the game<br>
+
+   FILE *in; <br>
+   in = fopen( "c:/INVADERS", "rb" );<br>
+   fread( &m_GameMemory[0x200], 0xfff, 1, in);<br>
+   fclose(in);<br>
+}
+
+</p>
+
+And thats all there is to it, pretty easy so far, it doesnt get much more difficult. <br><br>
+
+</p>
+
+<h3><b>Graphic Emulation:</b> </h3>
+<p>
+
+The graphics work by drawing sprites at a specific X and Y position on screen. The X and Y coordinates refer to the top left pixel of the sprite. Every sprite has a width of 8 pixels and a variable height. Sprite data is stored in game memory at the address the I register points to. Each byte of this memory represents 1 line of the sprite to draw. As just stated each line is always 8 pixels wide meaning that each pixel can be represented by 1 bit in the byte. If the bit for the pixel is set to 0 it means ignore this pixel leaving it at its current state. If the bit is set to 1 then it means toggle the state of the pixel (if it is currently on then set it to off otherwise set it to on). If the pixel is toggled from on to off then the flag register gets set to 1 otherwise it will be set to 0. This will represent a collision in sprites. Opcode DXYN is responsible for the graphic drawings. The resolution of the display is 64x32 and can be represented in the emulator as a 2D array.
+
+<p class="code"> 
+
+BYTE m_ScreenData[64][32] ;
+
+</p>
+
+Of course a resolution of 64x32 is pretty small so you can scale it however you like when you actually come to drawing the screen data. This is enough information to emulate the chip8 graphics however feel free to head over to <a href="http://www.pdc.kth.se/~lfo/chip8/CHIP8.htm">David Winters</a> site for a more indepth look at the chip8 graphics. The implementation of the opcode DXYN is discussed in the <a href="examples.html">Example Opcode</a> section of this site. You can use the navigation bar to your right to move on the next step, <a href="fetchdecode.html">the fetch and decode loop</a><br><br>
+
+
+</p>
+
+</div>
+
+<div id="sidebar">
+<h3>Chip8 Emulation:</h3>
+
+<p>
+<a class="sidelink" href="../chip8.html">Getting Started</a><span class="hide"> | </span>
+<a class="sidelink" href="hardware.html">Step 1: The Hardware</a><span class="hide"> | </span>
+<a class="sidelink" href="fetchdecode.html">Step 2: The fetch decode loop</a><span class="hide"> | </span>
+<a class="sidelink" href="examples.html">Step 3: Example opcode emulation</a><span class="hide"> | </span>
+<a class="sidelink" href="primitive.html">Step 4: Timers, Sound and Input</a><span class="hide"> | </span>
+<a class="sidelink" href="mychip8.html">My Finished project</a><span class="hide"> | </span>
+</p>
+
+</div>
+    
+<div id="footer">
+Copyright © 2008 codeslinger.co.uk
+</div>
+
+</div>
+</body>
+
+<!-- Mirrored from www.codeslinger.co.uk/pages/projects/chip8/hardware.html by HTTrack Website Copier/3.x [XR&CO'2010], Thu, 11 Aug 2011 17:34:20 GMT -->
+</html>
+
+

@@ -1,0 +1,291 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" dir="ltr">
+
+<head profile="http://gmpg.org/xfn/11">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+<title>Emulator Development  </title>
+
+<link rel="stylesheet" href="wp-content/themes/default/style.css" type="text/css" media="screen" />
+<link rel="alternate" type="application/rss+xml" title="Emulator Development RSS Feed" href="indexd784.html?feed=rss2" />
+<link rel="pingback" href="xmlrpc.html" />
+
+<style type="text/css" media="screen">
+
+	#page { background: url("wp-content/themes/default/images/kubrickbgwide.jpg") repeat-y top; border: none; }
+
+</style>
+
+<link rel="EditURI" type="application/rsd+xml" title="RSD" href="xmlrpc0db0.php?rsd" />
+<link rel="wlwmanifest" type="application/wlwmanifest+xml" href="wp-includes/wlwmanifest.xml" /> 
+<meta name="generator" content="WordPress 2.5.1" />
+
+</head>
+<body>
+<div id="page">
+
+
+<div id="header">
+	<div id="headerimg">
+		<h1><a href="index.html">Emulator Development</a></h1>
+		<div class="description">The art of emulator programming</div>
+	</div>
+</div>
+<hr />
+
+	<div id="content" class="narrowcolumn">
+
+	
+		
+			<div class="post" id="post-18">
+				<h2><a href="index0735.html?p=18" rel="bookmark" title="Permanent Link to Not such huge progress">Not such huge progress</a></h2>
+				<small>October 29th, 2008 <!-- by codeslinger --></small>
+
+				<div class="entry">
+					<p>Well it has been awhile since I&#8217;ve actually done any work on my master system emulator. Mainly because I have bought a PS3 and havent been able to stop playing it. Anyway I&#8217;ve now implemented VDP mode 2 background and sprite rendering. The background rendering seems flawless but the sprite rendering is buggy. I&#8217;ve looked over my code hundreds of times and cant find whats actually wrong with it. Im starting to think that I&#8217;ve implemented mode 2 sprite emulation perfect but there is a bug else where in my code which is causing it to misbehave because the buggy sprites look similar to the buggy sprites in lemmings and Land of Illusion which uses mode 4 rendering. Only time will tell I guess.</p>
+<p>I think I have finished emulating the VDP as although I have still yet to implement all the other modes besides 4 and 2, no commercial master system games use the other mode. Infact it is only F16 that uses mode 2 where as all the others use mode 4. Here are some screenshots of F16 using mode 2 rendering.</p>
+<p><img src="../../../../www.codeslinger.co.uk/pages/projects/mastersystem/images/f16-1.png"></img><br />
+<img src="../../../../www.codeslinger.co.uk/pages/projects/mastersystem/images/f16-2.png"></img></p>
+<p>I have also fixed the whacky colours on the &#8220;Wanted&#8221; game. This was due to not implementing RAM mirroring correctly.</p>
+<p>CS</p>
+				</div>
+
+				<p class="postmetadata"> Posted in <a href="indexaa1e.html?cat=4" title="View all posts in Sega Master System" rel="category">Sega Master System</a> |   <a href="index0735.html?p=18#respond" title="Comment on Not such huge progress">No Comments &#187;</a></p>
+			</div>
+
+		
+			<div class="post" id="post-17">
+				<h2><a href="indexd8eb.html?p=17" rel="bookmark" title="Permanent Link to Huge Progress">Huge Progress</a></h2>
+				<small>October 1st, 2008 <!-- by codeslinger --></small>
+
+				<div class="entry">
+					<p>I have fixed most of the bugs in my CPU emulator and now a lot of games are playable and the majority of them are completeable, which is great news. The only game I know of which is not playable which should be is Lemmings. I have no idea what is happening to this game when I try to emulate it but all the graphics are broke. The only other games that dont work are the ones that use the none standard vdp modes, which is because I&#8217;ve yet to implement them.</p>
+<p>Currently my CPU emulator passes 69 of the 70 zexall tests but to be honest I really dont trust zexall that much anymore as I think broken opcodes can still get the thumbs up from zexall. Plus it doesnt check all the instruction like Calls, Jumps, Returns and Exchanges. Still it will be nice when all 70 of the zexall tests are passed by my emulator.</p>
+<p>Hopefully by the end of this week my emulator will have passed all 70 of the zexall tests as well as having Lemmings workings. I will also try to implement other parts of the emulator which I&#8217;ve left out, like player twos control pad and the reset interupt. When all this is done I will start working on emulating the remaining VDP modes (which I really dont want to do) along with Sound and then finally speed optimizations. So far my emulator is running dog slow, which isnt suprising considering I have not done any optimizations yet. The reason for this is I like leaving optimizations til last and then I can see just how much of a speed improvement each optimization gives.</p>
+<p>CS</p>
+				</div>
+
+				<p class="postmetadata"> Posted in <a href="indexaa1e.html?cat=4" title="View all posts in Sega Master System" rel="category">Sega Master System</a> |   <a href="indexd8eb.html?p=17#comments" title="Comment on Huge Progress">2 Comments &#187;</a></p>
+			</div>
+
+		
+			<div class="post" id="post-16">
+				<h2><a href="index0e62-2.html?p=16" rel="bookmark" title="Permanent Link to Progress">Progress</a></h2>
+				<small>September 20th, 2008 <!-- by codeslinger --></small>
+
+				<div class="entry">
+					<p>I&#8217;ve had a lot less time available lately to work on my emulator which is why im progressing slower than I thought I would. However I have recently completely fixed scrolling as well as adding tile priorities and the backdrop colour. Zexall complains that there are many bugs in my z80 (all flag related).</p>
+<p>The good news is I&#8217;ve added input emulation which is much simpler than it is on the gameboy. Now sonic is completely playable. I&#8217;ve played up to the third level without anything going wrong which is great. Hopefully I&#8217;ll have time to play it fully to see how far I get. Hopefully the game is completeable.</p>
+<p>Im having luck with a lot of other games too like Alex Kidd which is also playable. Some games like Woody Pop doesnt even show the first screen which I find worrying because I have no idea whats going wrong. If I had to have a stab in the dark I&#8217;d guess that its related to VDP modes which im not handling yet.</p>
+<p>Anyway the rest of the day I&#8217;ll try and make zexall happier with my z80 emulation and maybe look into whats envolved with these vdp modes.</p>
+<p>CS</p>
+				</div>
+
+				<p class="postmetadata"> Posted in <a href="indexaa1e.html?cat=4" title="View all posts in Sega Master System" rel="category">Sega Master System</a> |   <a href="index0e62-2.html?p=16#respond" title="Comment on Progress">No Comments &#187;</a></p>
+			</div>
+
+		
+			<div class="post" id="post-15">
+				<h2><a href="indexa1ca.html?p=15" rel="bookmark" title="Permanent Link to Instruction set update">Instruction set update</a></h2>
+				<small>September 15th, 2008 <!-- by codeslinger --></small>
+
+				<div class="entry">
+					<p>Hi Guys,</p>
+<p>I have managed to get all of the standard opcodes implemented along with all CB, ED, DDCB and FDCB prefixes. I have a lot of the DD and FD opcodes left to implement though.</p>
+<p>I have improved the scrolling of the background but still got some graphical glitches to iron out.</p>
+<p>The good news is that I have had massive improvement in the amount of games showing their first screen (mainly because I&#8217;ve implemented the ED and DDCB opcodes). Hopefully when I finish the DD and FD opcodes I should be able to play in game.</p>
+<p>Here are some screenshots of how it&#8217;s looking at the moment. You can see the graphical glitches on Alex Kidd as he has a black box surrounding him. This is either priority or transparency that im not implementing correctly.</p>
+<p><img src="../../../../www.codeslinger.co.uk/pages/projects/mastersystem/images/sonic.png" alt="Sonic" /><br />
+<img src="../../../../www.codeslinger.co.uk/pages/projects/mastersystem/images/phantasy.png" alt="Phantasy Star" /></p>
+<p><img src="../../../../www.codeslinger.co.uk/pages/projects/mastersystem/images/alex.png" alt="Alex Kidd" /></p>
+<p><img src="../../../../www.codeslinger.co.uk/pages/projects/mastersystem/images/ecco.png" alt="Ecco the Dolphin" /></p>
+<p><img src="../../../../www.codeslinger.co.uk/pages/projects/mastersystem/images/columns.png" alt="Columns" /></p>
+				</div>
+
+				<p class="postmetadata"> Posted in <a href="indexaa1e.html?cat=4" title="View all posts in Sega Master System" rel="category">Sega Master System</a> |   <a href="indexa1ca.html?p=15#respond" title="Comment on Instruction set update">No Comments &#187;</a></p>
+			</div>
+
+		
+			<div class="post" id="post-14">
+				<h2><a href="index0b69.html?p=14" rel="bookmark" title="Permanent Link to Zexall">Zexall</a></h2>
+				<small>September 5th, 2008 <!-- by codeslinger --></small>
+
+				<div class="entry">
+					<p>I havent had much time to work on my emulator over the past week. However I have just managed to get zexall running the first few instructions fine. It breaks when it encounters an opcode I havent implemented which is not suprising <img src='wp-includes/images/smilies/icon_smile.gif' alt=':)' class='wp-smiley' /> </p>
+<p>With zexall working hopefully it wont be long until I have a fully working z80 emulator.</p>
+<p>Heres a screenshot of my emulator running zexall in debug mode (hence slow fps). I have no idea why the first character of the ouput isnt working but that&#8217;ll just be a small bug in my vdp emulation which is far from finished.</p>
+<p><img src="../../../../www.codeslinger.co.uk/pages/projects/mastersystem/images/zexall.png" alt="Zexall" /></p>
+<p>CS</p>
+				</div>
+
+				<p class="postmetadata"> Posted in <a href="indexaa1e.html?cat=4" title="View all posts in Sega Master System" rel="category">Sega Master System</a> |   <a href="index0b69.html?p=14#respond" title="Comment on Zexall">No Comments &#187;</a></p>
+			</div>
+
+		
+			<div class="post" id="post-12">
+				<h2><a href="index678b.html?p=12" rel="bookmark" title="Permanent Link to Zuko">Zuko</a></h2>
+				<small>August 27th, 2008 <!-- by codeslinger --></small>
+
+				<div class="entry">
+					<p>Well sourceforge accepted my project. The project is called Zuko and its website can be found <a href="http://zuko.sourceforge.net/">here</a>.</p>
+<p>Zuko is a multi game console emulator. At first it will fully emulate the Gameboy, Sega Master System and Sega Mega Drive/Genesis. However this is not the main reason for Zuko being created. With all the next generation consoles being released (XBOX 360, playstation 3 etc) in my opinion the emulation scene is struggling to survive. It is no longer possible for one programmer to emulate nextgen consoles. It will take a team of talented emulator programmers years to do. Zuko&#8217;s main purpose is to make the learning curve from new emulator programmers less steep so they can develop the skills needed for the emulation scene to continue.</p>
+<p>Zuko will allow the user to debug the ROMS and give them control over the console. It will have a tile and sprite viewer and allow the user to change their attributes (flips and zooms etc) as well as controlling the scrolling and the palette. The user can also edit the game speed and control the interupts. They will be able to view the register states as well as changing them to see how they affect the games. There will also be a lot more options aswell as being able to control the way the emulator works, for example switching between Interpreter to Binary Translation along with dynamic recompilation and threaded interpretation. The project will be completely open source and I will supply the svn repository details for Zuko and all the individual emulators. When I get the svn repo set up I&#8217;ll post the link straight away so you can all check my progress. I plan to completely finish the Gameboy, Master System and Mega Drive emulators first before integrating them into Zuko.</p>
+<p>Future version of Zuko will support NES and the Nintendo 64 (now that will be one hell of a project!). </p>
+<p>Oh and also Zuko can be used for a normal emulator to relive gaming classics! Like all my other emulators it will be programmed in C++ and will run under Windows and GNU/Linux.</p>
+<p>Finally these are the two screenshots I promised in my last post</p>
+<p><img src="../../../../www.codeslinger.co.uk/pages/projects/mastersystem/images/greatsoccer.png" alt="GreatSoccer on the Master System" /></p>
+<p><img src="../../../../www.codeslinger.co.uk/pages/projects/mastersystem/images/ghosthouse.png" alt="Ghost House on the Master System" /></p>
+				</div>
+
+				<p class="postmetadata"> Posted in <a href="indexb946.html?cat=5" title="View all posts in Zuko" rel="category">Zuko</a> |   <a href="index678b.html?p=12#respond" title="Comment on Zuko">No Comments &#187;</a></p>
+			</div>
+
+		
+			<div class="post" id="post-11">
+				<h2><a href="index5757.html?p=11" rel="bookmark" title="Permanent Link to Sourceforge">Sourceforge</a></h2>
+				<small>August 26th, 2008 <!-- by codeslinger --></small>
+
+				<div class="entry">
+					<p>I am currently awaiting permission from sourceforge to host my emulation project. When and if they accept I&#8217;ll put the svn details of my master system emulator on here so you can keep track of my progress. Read permissions only of course <img src='wp-includes/images/smilies/icon_smile.gif' alt=':-)' class='wp-smiley' /> </p>
+<p>If I get this sourceforge project it will be more than just a master system emulator. I&#8217;ll explain more when they have accepted the project. Fingers crossed.</p>
+<p>On a side note I have two master system games emulating up to the first screen display. These games are &#8220;Great Soccer&#8221; and &#8220;Ghost House&#8221;.</p>
+<p>Screenshots coming soon.</p>
+<p>CS</p>
+				</div>
+
+				<p class="postmetadata"> Posted in <a href="indexb31a.html?cat=1" title="View all posts in Uncategorized" rel="category">Uncategorized</a> |   <a href="index5757.html?p=11#respond" title="Comment on Sourceforge">No Comments &#187;</a></p>
+			</div>
+
+		
+			<div class="post" id="post-10">
+				<h2><a href="index64b4.html?p=10" rel="bookmark" title="Permanent Link to Master System VDP Update">Master System VDP Update</a></h2>
+				<small>August 23rd, 2008 <!-- by codeslinger --></small>
+
+				<div class="entry">
+					<p>I&#8217;ve made a bit of progress on my master system in the last 24 hours. So far I&#8217;ve managed to get 2 VDP test roms running perfectly, a third test rom running but with glitches and the Z80 CPU Instruction Exerciser ROM running. So far the Z80 Instruction Exerciser ROM runs but every instruction check fails. This is not because all the instructions are incorrect (because if that was the case I&#8217;d never see any ROMS load), so I guess the problem is with the checking algorithm it uses. I must have implemented one of the opcodes incorrectly which does the checking, therefore everything appears to be incorrect. Hopefully soon I can upload some screenshots of either a game screen or the Z80 Instruction Exerciser passing some tests.</p>
+				</div>
+
+				<p class="postmetadata"> Posted in <a href="indexaa1e.html?cat=4" title="View all posts in Sega Master System" rel="category">Sega Master System</a> |   <a href="index64b4.html?p=10#respond" title="Comment on Master System VDP Update">No Comments &#187;</a></p>
+			</div>
+
+		
+			<div class="post" id="post-9">
+				<h2><a href="indexb5fb.html?p=9" rel="bookmark" title="Permanent Link to Starting the Master System">Starting the Master System</a></h2>
+				<small>August 18th, 2008 <!-- by codeslinger --></small>
+
+				<div class="entry">
+					<p>Over the past few days I&#8217;ve had a few hours spare to start reading about the sega master system. The CPU is a Z80 which is what the Gameboy CPU is similar to, so I have already implemented 50% of the instructions. I have found the website <a href="http://www.smspower.org/dev/docs/">SMS Power</a> very useful for the SMS documentation. Unlike the gameboy there is not one document which covers everything you need to emulate the SMS so I&#8217;m using about 7 different resources to learn from, which I quite like doing really as it feels less spoon fed this way.</p>
+<p>When I first started looking into emulating the Z80 I thought it would be easier than the Gameboy because of the fewer interupts and I found the gameboy quite quirky, however this is not the case. The other 50% of the Z80 cpu instructions I have to implement are more complicated than the 50% I&#8217;ve already implemented. Plus there are another 5 flags that need to be set correctly. The 0xFD and 0xDD opcodes make the cpu feel quite bloated aswell. The VDP seems much more complicated than the Gameboy and so do the way the interupts work. I&#8217;m still confident that I can finish this system in two months including sound but only if I have the time to do work on it, but it wont be as easy as I first thought.</p>
+<p>I have got a few test roms from that SMS Power site which I have emulated all the opcodes for, so now I just need to get the VDP showing something for them. Once I have emulated the VDP I should be able to run ZEXALL which is a Z80 test rom, which will be really usefull for eliminating cpu bugs.</p>
+<p>Fun fun fun</p>
+				</div>
+
+				<p class="postmetadata"> Posted in <a href="indexaa1e.html?cat=4" title="View all posts in Sega Master System" rel="category">Sega Master System</a> |   <a href="indexb5fb.html?p=9#respond" title="Comment on Starting the Master System">No Comments &#187;</a></p>
+			</div>
+
+		
+			<div class="post" id="post-8">
+				<h2><a href="index2df4.html?p=8" rel="bookmark" title="Permanent Link to Gameboy emulator 95% compatibility">Gameboy emulator 95% compatibility</a></h2>
+				<small>July 29th, 2008 <!-- by codeslinger --></small>
+
+				<div class="entry">
+					<p>Well over the past few days I&#8217;ve been writing a draft for this blog about the Gameboy LCD. However I&#8217;ve just fixed a bug in my emulator that has given me 95% compatibility (without sound). So instead of continuing discussing gameboy emulation in this blog I will complete the Gameboy howto section on my <a href="../../../../www.codeslinger.co.uk/index.html">website</a> which will explain how to successfully emulate all parts of the gameboy aswell as hosting my source code (just the same as what I did with the chip8). There are two notable bugs in the emulator. The first is with kirby&#8217;s dream land, the enemies seem to vanish. The second is with monopoly which has a terrible flicker when viewing the property card. Apart from this the all games are completeable with the occassional graphic glitch.</p>
+<p>I shall continue to use this blog, but from now on it will be about exploring how to emulate the master system which at the time of writing I havent even looked into.</p>
+<p>You may be wondering if im ever going to implement sound for the gameboy. I have read that the master system sound is easier to do than the gameboy and as I have no knowledge of sound emulation I was going to complete the master system and then come back to the gameboy.</p>
+				</div>
+
+				<p class="postmetadata"> Posted in <a href="index81ea.html?cat=3" title="View all posts in Gameboy" rel="category">Gameboy</a> |   <a href="index2df4.html?p=8#respond" title="Comment on Gameboy emulator 95% compatibility">No Comments &#187;</a></p>
+			</div>
+
+		
+		<div class="navigation">
+			<div class="alignleft"><a href="index8a68.html?paged=3">&laquo; Older Entries</a></div>
+			<div class="alignright"><a href="index.html">Newer Entries &raquo;</a></div>
+		</div>
+
+	
+	</div>
+
+	<div id="sidebar">
+		<ul>
+						<li>
+				<form method="get" id="searchform" action="http://codeslinger.co.uk/pages/blog/wordpress/">
+<div><input type="text" value="" name="s" id="s" />
+<input type="submit" id="searchsubmit" value="Search" />
+</div>
+</form>
+			</li>
+
+			<!-- Author information is disabled per default. Uncomment and fill in your details if you want to use it.
+			<li><h2>Author</h2>
+			<p>A little something about you, the author. Nothing lengthy, just an overview.</p>
+			</li>
+			-->
+
+			 <li>
+
+						<p>You are currently browsing the <a href="index.html">Emulator Development</a> blog archives.</p>
+
+			
+			</li> 
+			
+			<li><h2>Archives</h2>
+				<ul>
+					<li><a href='indexd189.html?m=201005' title='May 2010'>May 2010</a></li>
+	<li><a href='indexc36d.html?m=200905' title='May 2009'>May 2009</a></li>
+	<li><a href='index17e8.html?m=200904' title='April 2009'>April 2009</a></li>
+	<li><a href='index10a5.html?m=200903' title='March 2009'>March 2009</a></li>
+	<li><a href='index8988.html?m=200902' title='February 2009'>February 2009</a></li>
+	<li><a href='index7866.html?m=200812' title='December 2008'>December 2008</a></li>
+	<li><a href='index55f6.html?m=200811' title='November 2008'>November 2008</a></li>
+	<li><a href='indexa7bc.html?m=200810' title='October 2008'>October 2008</a></li>
+	<li><a href='indexe77c.html?m=200809' title='September 2008'>September 2008</a></li>
+	<li><a href='indexcffc.html?m=200808' title='August 2008'>August 2008</a></li>
+	<li><a href='index0e62.html?m=200807' title='July 2008'>July 2008</a></li>
+				</ul>
+			</li>
+
+			<li class="categories"><h2>Categories</h2><ul>	<li class="cat-item cat-item-3"><a href="index81ea.html?cat=3" title="View all posts filed under Gameboy">Gameboy</a> (6)
+</li>
+	<li class="cat-item cat-item-4"><a href="indexaa1e.html?cat=4" title="View all posts filed under Sega Master System">Sega Master System</a> (13)
+</li>
+	<li class="cat-item cat-item-1"><a href="indexb31a.html?cat=1" title="View all posts filed under Uncategorized">Uncategorized</a> (4)
+</li>
+	<li class="cat-item cat-item-5"><a href="indexb946.html?cat=5" title="View all posts filed under Zuko">Zuko</a> (1)
+</li>
+</ul></li>
+							
+				<li><h2>Meta</h2>
+				<ul>
+										<li><a href="wp-login.html">Log in</a></li>
+					<li><a href="http://validator.w3.org/check/referer" title="This page validates as XHTML 1.0 Transitional">Valid <abbr title="eXtensible HyperText Markup Language">XHTML</abbr></a></li>
+					<li><a href="http://gmpg.org/xfn/"><abbr title="XHTML Friends Network">XFN</abbr></a></li>
+					<li><a href="http://wordpress.org/" title="Powered by WordPress, state-of-the-art semantic personal publishing platform.">WordPress</a></li>
+									</ul>
+				</li>
+			
+					</ul>
+	</div>
+
+
+
+<hr />
+<div id="footer">
+<!-- If you'd like to support WordPress, having the "powered by" link somewhere on your blog is the best way; it's our only promotion or advertising. -->
+	<p>
+		Emulator Development is proudly powered by
+		<a href="http://wordpress.org/">WordPress</a>
+		<br /><a href="indexd784.html?feed=rss2">Entries (RSS)</a>
+		and <a href="indexa6da.html?feed=comments-rss2">Comments (RSS)</a>.
+		<!-- 21 queries. 0.219 seconds. -->
+	</p>
+</div>
+</div>
+
+<!-- Gorgeous design by Michael Heilemann - http://binarybonsai.com/kubrick/ -->
+
+		</body>
+
+<!-- Mirrored from codeslinger.co.uk/pages/blog/wordpress/?paged=2 by HTTrack Website Copier/3.x [XR&CO'2010], Thu, 11 Aug 2011 17:34:44 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8"><!-- /Added by HTTrack -->
+</html>

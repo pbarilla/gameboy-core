@@ -1,0 +1,372 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<!-- Mirrored from www.codeslinger.co.uk/pages/projects/chip8/examples.html by HTTrack Website Copier/3.x [XR&CO'2010], Thu, 11 Aug 2011 17:34:21 GMT -->
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="description" content="_Emulation Programming_" />
+<meta name="keywords" content="_Emulation,Chip8,Gameboy,NES,SNES,Genesis,Master,System,Mega,Drive_" />
+<meta name="author" content="CodeSlinger /" />
+<link rel="stylesheet" type="text/css" href="../../../css.css" media="screen,projection" title="CodeSlinger (screen)" />
+<link rel="stylesheet" type="text/css" href="../../../print.css" media="print" />
+<title>codeslinger.co.uk</title>
+</head>
+
+<body>
+<div>
+<br><br>
+</div>
+
+<div id="container">
+<div id="logo">
+<h1><a href="../../../index-2.html">codeslinger.co.uk</a></h1>
+</div>
+
+<div id="navitabs">
+<h2 class="hide">Site menu:</h2>
+<a class="navitab" href="../../../index-3.html">Home</a><span class="hide"> | </span>
+<a class="navitab" href="../../basics.html">Basics</a><span class="hide"> | </span>
+<a class="navitab" href="../zuko.html">Zuko</a><span class="hide"> | </span>
+<a class="navitab" href="../megadrive.html">Mega Drive/Genesis</a><span class="hide"> | </span>
+<a class="navitab" href="../mastersystem.html">Master System</a><span class="hide"> | </span>
+<a class="navitab" href="../gameboy.html">Gameboy</a><span class="hide"> | </span>
+<a class="activenavitab" href="../chip8.html">Chip8</a><span class="hide"> | </span>
+<a class="navitab" href="../../blog/index.html">Blog</a><span class="hide"> | </span>
+</div>
+	
+<div id="desc">
+<h2>codeslinger.co.uk</h2>
+<p> The chip8 opcode emulation.</p>
+
+</div>
+
+<div id="main">
+<h3><b>Opcode Examples:</b> </h3>
+<p>
+
+Below is a set of example opcode for the chip8 system. The idea is to give examples of how to emulate a CPU and how to decode an opcode.
+</p>
+
+<h3><b>Opcode 2NNN - Call subroutine at NNN:</b> </h3>
+<p>
+This opcode calls a function inside the game code and once it has finished executing the function it returns to where it previously was. The NNN part of the 2NNN opcode is the beginning of the subroutine. Our emulated function of opcode 2NNN simply saves the current program counter so we know where to return to when the subroutine finshes and jumps to address NNN. 
+<br><br>
+
+<p class="code"> 
+
+void Opcode2NNN( WORD opcode )<br>
+{<br>
+    
+m_Stack.push_back(m_ProgramCounter) ; // save the program counter <br>
+    
+m_ProgramCounter = opcode & 0x0FFF ; // jump to address NNN <br>
+}
+
+</p>
+
+Remember that before this function is called m_ProgramCounter points to the next opcode in memory,not the 2NNN. This is because our GetNextOpcode function returns opcode 2NNN and then moves the m_ProgramCounter to the next instruction. If you didnt move the m_ProgramCounter onto the next instruction then this function would cause serious problems as you will recursively call subroutine NNN upon returning from it.
+
+</p>
+
+
+
+<h3><b>Opcode 5XY0: Skips the next instruction if VX equals VY</b> </h3>
+<p>
+There are a few opcodes like this and they are all really easy to implement. All the emulated function has to do is compare the contents of registerx to registery and if they are equal the program counter gets moved onto the next instruction. First of all we have to decode the opcode to find which is registerx. Then we do the same for registery and compare the two.
+<br><br>
+
+<p class="code"> 
+
+void Opcode5XY0( WORD opcode )<br>
+{<br>
+    
+int regx = opcode & 0x0F00 ; // mask off reg x<br>
+    
+regx = regx >> 8 ; // shift x across <br>
+    
+int regy = opcode & 0x00F0 ; // mask off reg y <br>
+    
+regy = regy >> 4 ; // shift y across <br>
+    
+if (m_Registers[regx] == m_Registers[regy]) <br>
+        
+m_ProgramCounter+=2 ; // skip next instruction<br>
+}
+
+</p>
+
+If you dont understand bit shifting then this instruction can seem confusing at first, however it's really quite simple. If the opcode we were processing was 5120 then obviously the 5 part of this opcode is the opcode identifier. The 1 part of this opcode is registerX and the 2 part is registerY (the 0 isnt used in this opcode). So in order to get the registerX value from 5120 we logical and it with 0x0F00 which will return 0x100. However 0x100 is no good to us we need the value 0x1. So the code has to shift this value across 8 places to turn 0x100 to 0x1. But why do we shift it 8 places? Each hexedecimal digit (0-F) can be represented as 4 binary bits so if we need to move one digit across we have to shift it right by 4. However as 0x100 needs to be shifted two digits right to become 0x1 the code must shift it 8 times. This explains why the code only shifts right the registerY by 4 places because 0x20 is only one digit away from 0x2. If you still dont understand I recommend you google bit shifting as I seem to of found a very difficult way of explaining something quite simple... Anyway, moving swiftly on. The program counter gets incremented twice if the two registers are equal to skip the next instruction. If you remember that one opcode is two bytes in memory which is why it gets incremented twice.
+
+</p>
+
+
+
+
+<h3><b>Opcode 8XY5- RegisterY is subtracted from RegisterX:</b> </h3>
+<p>
+
+
+As explained in one of the other sections the register array is 16 elements in range and each element stores 1 byte of memory. As we are dealing with unsigned bytes each element of the registers can contain a value between 0 and 255. However what happens when an addition or subtraction results in a value outside that range(i.e. 254+8 or 4-7)? This is what register F aka the carry flag is used for. Whenever an equation results in a value outside of the 0-255 range then the carry flag is set according to what the instruction expects. For a subraction instruction the carry flag is set to 0 if the result is less than 0, otherwise it is set to 1.
+
+<br><br>
+
+<p class="code"> 
+
+void Opcode8XY5( WORD opcode )<br>
+{<br>
+    
+m_Register[0xF] = 1; <br>
+    
+int regx = opcode & 0x0F00 ; // mask off reg x<br>
+    
+regx = regx >> 8 ; // shift x across <br>
+    
+int regy = opcode & 0x00F0 ; // mask off reg y <br>
+    
+regy = regy >> 4 ; // shift y across <br>
+    
+int xval = m_Register[regx] ; <br>
+    
+int yval = m_Register[regy] ; <br>
+    
+if (yval > xval) // if this is true will result in a value < 0 <br>
+    
+    
+m_Register[0xF] = 0 ; <br>
+    
+m_Register[regx] = xval-yval ;<br>
+
+}
+
+
+</p>
+
+The first thing this function does is set the carry flag to 1 which means that the equation did not wrap around itself. It then simply gets the values from the X and Y registers and checks to see if Y is bigger. If it is bigger than obviously X-Y will result in a negative number which means it will wrap round so the carry flag must be set to 0. It finishes by actually doing the substitution.
+
+</p>
+
+
+
+
+
+
+
+<h3><b>Opcode DXYN - Draws a sprite at coordinate (VX, VY) that has a width of 8 pixels and a height of N pixels:</b> </h3>
+<p>
+
+
+This is the opcode which draws a sprite to the screen. The sprite will always be 8 pixels wide and you need to decode the opcode for the height of the sprite. When you draw each pixel of the sprite if the pixel was already on then you must turn it off. So you are actually just toggling the visibility of each pixel in the sprite. If a pixel is turned from on to off then the carry flag must be set to 1. If none of the pixels are turned from on to off then the carry flag is set to 0.
+
+<br><br>
+
+<p class="code"> 
+
+void OpcodeDXYN( WORD opcode )<br>
+{<br>
+    
+int regx = opcode & 0x0F00 ;<br>
+    
+regx = regx >> 8 ; <br>
+    
+int regy = opcode & 0x00F0 ; <br>
+    
+regy = regy >> 4 ; <br>
+<br>
+    
+int height = opcode & 0x000F<br>
+    
+int coordx = m_Registers[regx] ;<br>
+    
+int coordy = m_Registers[regy] ;<br><br>
+
+    
+m_Registers[0xf] = 0 ; <br><br>
+
+    
+// loop for the amount of vertical lines needed to draw<br>
+    	
+for (int yline = 0; yline < height; yline++)<br>
+    
+{<br>
+    
+    
+BYTE data = m_GameMemory[m_AddressI+yline]; <br>
+    
+    
+int xpixelinv = 7 ; <br>
+    
+    
+int xpixel = 0 ; <br>
+    
+    
+for(xpixel = 0;xpixel < 8; xpixel++,xpixelinv--) <br>
+    
+    
+{<br>
+    
+    
+    
+int mask = 1 << xpixelinv ; <br>
+    
+    
+    
+if (data & mask)<br>
+    
+    
+    
+{<br>
+    
+    
+    
+    
+int x = coordx + xpixel; <br>
+    
+    
+    
+    
+int y = coordy + yline ; <br>
+    
+    
+    
+    
+
+if ( m_ScreenData[x][y] == 1 )<br>
+    
+    
+    
+    
+    
+m_Registers[0xF]=1; //collision<br>
+    
+    
+    
+    
+m_ScreenData[x][y]^=1 ;<br>
+
+
+    
+    
+    
+
+}<br>
+
+    
+    
+}<br>
+
+    
+}<br>
+
+}<br>
+
+</p>
+
+This is the most difficult the emulator gets. The variables coordx and coordy specify the top left coordinates where the sprite will be drawn. The code then decodes the opcode to get the height of the sprite because this varies from sprite to sprite. However all sprites are 8 pixels wide. The data needed to draw the sprite is located at memory address m_GameMemory[m_AddressI]. It is stored as sequential bytes of data from this address. Each byte represents one line of the sprite. Each bit of the 1 byte sprite line instructs whether the pixel represented by this bit needs to have its state toggled. If the bit is 0 then this pixel is ignored. If it is a 1 then it must be toggled. If a pixel to be toggled is being toggled from on to off (1 to 0) then the collision flag must be set. The line m_ScreenData[x][y] ^=1 is responsible for toggling the pixel state. Perhaps the only really confusing part of this function is the xpixelinv variable. The purpose for this is to translate the xpixel variable which increments from 0 to 7 each loop to a value between 7 and 0. So if xpixel is 0 then xpixelinv is 7. When xpixel is 1 xpixelinv is 6 etc. The reason for this is the way that the sprite data is encoded. Pixel 0 is bit 7 in the sprite data whereas pixel 7 is bit 0. The data & mask code is simply to determine if the bit xpixelinv refers to is 1 or 0. If it is 1 then it toggles the pixel state, otherwise it ignores the pixel. 
+
+</p>
+
+
+
+
+<h3><b>Opcode FX33 - Binary-coded decimal :</b> </h3>
+<p>
+
+When I first coded my Chip8 emulator this was the instruction that caused me the most headaches. It maybe simple to emulate but I just couldn't understand what the opcode was designed to do. Binary coded decimal is storing each digit of a number as its own sequence. For example number 123 is represented as 1 then 2 and then 3. This opcode takes the value stored in registerx and stores each digit in game memory starting from m_AddressI. For expample: If the value stored in registerx was 45 then we would put the following values in game memory. m_GameMemory[m_AddressI] = 0; m_GameMemory[m_AddressI+1] = 4 ; m_GameMemory[m_AddressI+2] = 5 ; However we need a generic algorithm for doing this:
+
+<br><br>
+
+<p class="code"> 
+
+void OpcodeFX33( WORD opcode )<br>
+{<br>
+    
+int regx = opcode & 0x0F00 ;<br>
+    
+regx >>= 8 ;<br><br>
+
+    
+int value = m_Registers[regx] ;<br><br>
+
+    
+int hundreds = value / 100 ;<br>
+    
+int tens = (value / 10) % 10 ;<br>
+    
+int units = value % 10 ;<br><br>
+
+    
+m_GameMemory[m_AddressI] = hundreds ;<br>
+    
+m_GameMemory[m_AddressI+1] = tens ; <br>
+    
+m_GameMemory[m_AddressI+2] = units ;<br>
+}
+
+</p>
+
+This code is very self explanatory. If you are having problems understanding it then look up how the modulus operator % works.
+
+</p>
+
+
+<h3><b>Opcode FX55 - Stores V0 to VX in memory starting at address I:</b> </h3>
+<p>
+This opcode simply loops through registers VX to V0 storing their values from m_GameMemory[m_AddressI]. It is also important to note that after this operation the m_AddressI variable is set to m_AddressI + X + 1.
+<br><br>
+
+<p class="code"> 
+
+void OpcodeFX55( WORD opcode )<br>
+{<br>
+    
+int regx = opcode & 0x0F00 ;<br>
+    
+regx >>= 8 ; <br>
+    
+for (int i = 0 ; i <= regx; i++)<br>
+    
+{<br>
+    
+    
+m_GameMemory[m_AddressI+i] = m_Registers[i] ; <br>
+    
+}<br>
+    
+m_AddressI= m_AddressI+regx+1 ;<br>
+}
+
+</p>
+
+The one thing I remain unsure of with this opcode is whether the for loop uses a "<=" operator or a "<". My current emulator seems to work fine "<=" so thats what im going with. Feel free to test this and change it if necessary. Opcode FX65 is just the reverse of this opcode (stores game memory in registers) but it still changes the m_AddressI in the same way as this function does.<br><br>
+
+</p>
+
+ 
+
+</div>
+
+<div id="sidebar">
+<h3>Chip8 Emulation:</h3>
+
+<p>
+<a class="sidelink" href="../chip8.html">Getting Started</a><span class="hide"> | </span>
+<a class="sidelink" href="hardware.html">Step 1: The Hardware</a><span class="hide"> | </span>
+<a class="sidelink" href="fetchdecode.html">Step 2: The fetch decode loop</a><span class="hide"> | </span>
+<a class="sidelink" href="examples.html">Step 3: Example opcode emulation</a><span class="hide"> | </span>
+<a class="sidelink" href="primitive.html">Step 4: Timers, Sound and Input</a><span class="hide"> | </span>
+<a class="sidelink" href="mychip8.html">My Finished project</a><span class="hide"> | </span>
+</p>
+
+</div>
+    
+<div id="footer">
+Copyright © 2008 codeslinger.co.uk
+</div>
+
+</div>
+</body>
+
+<!-- Mirrored from www.codeslinger.co.uk/pages/projects/chip8/examples.html by HTTrack Website Copier/3.x [XR&CO'2010], Thu, 11 Aug 2011 17:34:21 GMT -->
+</html>
+
+

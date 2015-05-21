@@ -1,0 +1,621 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<!-- Mirrored from www.codeslinger.co.uk/pages/projects/gameboy/graphics.html by HTTrack Website Copier/3.x [XR&CO'2010], Thu, 11 Aug 2011 17:34:19 GMT -->
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="description" content="_Emulation Programming_" />
+<meta name="keywords" content="_Emulation,Chip8,Gameboy,NES,SNES,Genesis,Master,System,Mega,Drive_" />
+<meta name="author" content="CodeSlinger /" />
+<link rel="stylesheet" type="text/css" href="../../../css.css" media="screen,projection" title="CodeSlinger (screen)" />
+<link rel="stylesheet" type="text/css" href="../../../print.css" media="print" />
+<title>codeslinger.co.uk</title>
+</head>
+
+<body>
+<div>
+<br><br>
+</div>
+
+<div id="container">
+<div id="logo">
+<h1><a href="../../../index-2.html">codeslinger.co.uk</a></h1>
+</div>
+
+<div id="navitabs">
+<h2 class="hide">Site menu:</h2>
+<a class="navitab" href="../../../index-3.html">Home</a><span class="hide"> | </span>
+<a class="navitab" href="../../basics.html">Basics</a><span class="hide"> | </span>
+<a class="navitab" href="../zuko.html">Zuko</a><span class="hide"> | </span>
+<a class="navitab" href="../megadrive.html">Mega Drive/Genesis</a><span class="hide"> | </span>
+<a class="navitab" href="../mastersystem.html">Master System</a><span class="hide"> | </span>
+<a class="activenavitab" href="../gameboy.html">Gameboy</a><span class="hide"> | </span>
+<a class="navitab" href="../chip8.html">Chip8</a><span class="hide"> | </span>
+<a class="navitab" href="../../blog/index.html">Blog</a><span class="hide"> | </span>
+</div>
+	
+<div id="desc">
+<h2>codeslinger.co.uk</h2>
+<p> Gameboy - Graphics Emulation.</p>
+
+</div>
+
+<div id="main">
+
+<h3><b>Graphics Emulation:</b></h3>
+<p>
+
+The gameboy uses the tile and sprite method of storing and drawing graphics to the screen.
+The tiles are what form the background and are not interactive. Each tile is 8x8 pixels. The sprites are the interactive
+graphics on the display. An example is the game Mario. The character mario is a sprite. The graphic
+can move and it can collide with the other sprites. The bad guys are also sprites as they can fly around and attack mario.
+The tiles are the background which defines the level and its terrain. <br><br>
+
+As stated previously the resolution of the gameboy is 160x144 however this is just what can be displayed on the screen. The
+real resolution is 256x256 (32x32 tiles). The visual display can show any 160x144 pixels of the 256x256 background, this allows
+for scrolling the viewing area over the background.<br><br>
+
+Aswell as having a 256x256 background and a 160x144 viewing the display the gameboy has a window which appears above the background
+but behind the sprites (unless the attributes of the sprite specify otherwise, discussed later). The purpose of the window is to
+put a fixed panel over the background that does not scroll. For example some games have a panel on the screen which displays the characters
+health and collected items, (notably links awakening) and this panel does not scroll with the background when the character moves. This is the window.<br><br>
+
+This part of the site shows how to emulate everything I have just discussed. The examples I give below were designed to give the easiest understanding
+of how the tile and sprite system works but it is far from efficient. Luckily graphic emulation is the area where most speed optimization can be achieved
+with the least amount of effort (by using dirty rectangles and the likes) but this would not give a good demonstration.
+
+</p>
+
+<h3><b>The LCD Control Register:</b></h3>
+<p>
+
+In the <a href="lcd.html">LCD</a> chapter I briefly touched upon the LCD Control register. This register contains a lot
+of data that we need to understand before we can emulate graphics. This is the breakdown of the 8-bit special register:
+
+<p class="block">
+Taken from the pandocs:<br><br>
+
+ Bit 7 - LCD Display Enable             (0=Off, 1=On)<br>
+ Bit 6 - Window Tile Map Display Select (0=9800-9BFF, 1=9C00-9FFF)<br>
+ Bit 5 - Window Display Enable          (0=Off, 1=On)<br>
+ Bit 4 - BG & Window Tile Data Select   (0=8800-97FF, 1=8000-8FFF)<br>
+ Bit 3 - BG Tile Map Display Select     (0=9800-9BFF, 1=9C00-9FFF)<br>
+ Bit 2 - OBJ (Sprite) Size              (0=8x8, 1=8x16)<br>
+ Bit 1 - OBJ (Sprite) Display Enable    (0=Off, 1=On)<br>
+ Bit 0 - BG Display (for CGB see below) (0=Off, 1=On)<br>
+
+</p> 
+
+<b>Bit 7:</b> I have already discussed Bit7. Basically it says if the lcd is enabled, if not we dont draw anything. This is already handled in the UpdateGraphics function.<br><br>
+<b>Bit 6:</b> This is where to read to read the tile identity number to draw onto the window<br><br>
+<b>Bit 5:</b> If this is set to 0 then the window is not enabled so we dont draw it<br><br>
+<b>Bit 4:</b> You use the identity number for both the window and the background tiles that need to be draw to the screen here to get the data of the tile that needs to be displayed.
+The important thing to remember about this bit is that if it is set to 0 (i.e. read from address 0x8800) then the tile identity number we looked up is actually a signed byte not unsigned (explained fully later)<br><br>
+<b>Bit 3:</b> This is the same as Bit6 but for the background not the window<br><br>
+<b>Bit 2:</b> This is the size of the sprites that need to draw. Unlike tiles that are always 8x8 sprites can be 8x16<br><br>
+<b>Bit 1:</b> Same as  Bit5 but for sprites<br><br>
+<b>Bit 0:</b> Same as Bit5 and 1 but for the background <br><br>
+
+
+You may remember that the UpdateGraphics function called the DrawScanLine function which I've yet to implement.
+However with the above lcd control register info I now can:
+
+<p class="code">
+void Emulator::DrawScanLine( )<br>
+{<br>
+   BYTE control = ReadMemory(0xFF40) ;<br>
+   if (TestBit(control,0))<br>
+     RenderTiles( ) ;<br><br>
+   if (TestBit(control,1))<br>
+     RenderSprites( ) ;<br>
+
+}
+</p>
+
+<h3><b>Rendering the Tiles Part 1:</b> </h3>
+<p>
+
+As previously stated the background is made up of 256x256 pixels (32x32 tiles) however as we only display 160x144
+pixels there is no need to draw the rest. Before we can start drawing the background we need to know where to draw the
+background, i.e. which of 160x144 of the 256x256 background is going to be displayed?
+
+<p class="block">
+ScrollY (0xFF42): The Y Position of the BACKGROUND where to start drawing the viewing area from <br>
+ScrollX (0xFF43): The X Position of the BACKGROUND to start drawing the viewing area from<br>
+WindowY (0xFF4A): The Y Position of the VIEWING AREA to start drawing the window from<br>
+WindowX (0xFF4B): The X Positions -7 of the VIEWING AREA to start drawing the window from
+</p>
+
+So now we know where to draw the viewing area in relation to the background and where to draw the
+window in relation to the viewing area. The minus 7 of the windowX pos is necessary. So if you wanted
+to start drawing the window in the upper left hand corner (coordinates 0,0) of the viewing area you'd set WindowY to 0 and
+WindowX to 7. Well when I say "when you want to draw the window" its actually the game decides not the emulator. On a side note if
+the window was drawn in the top left corner then the window would completely cover the background. If the window wanted to cover only the
+bottom half of the background the WindowY would bet set to 72 (144/2) and WindowX 7.<br><br>
+
+So now we know where to draw the background and the window we need to determine what we need to draw. The gameboy has two regions of memoory for the background
+layout which is shared by the window. The memory regions are 0x9800-0x9BFF and 0x9C00-9FFF. We need to check bit 3 of the lcd contol register to see which region we are
+using for the background and bit 6 for the window. Each byte in the memory region is a tile identification number of what needs to be drawn. This identification number
+is used to lookup the tile data in video ram so we know how to draw it.<br><br>
+
+Looking at bit 4 of the LCD control register we can see that there are two places where the tile date is located  0x8000-0x8FFF and 0x88000x97FF. Each of these memory regions
+gives us 4096 (0x1000) bytes of data to store all the tiles. Each tile is stored in memory as 16 bytes. Remember that a tile is 8x8 pixels and that in memory each line of the
+tile requires two bytes to represent, hence the 16 bytes per tile. So now we know where the tile data is stored and where the background layout is stored. The background layout
+gives the tile identification number to look up the tile in the tile data area. However this is the tricky part, if the tile data memory area we are using is 0x8000-0x8FFF then
+the tile identifier read from the background layout regions is an UNSIGNED BYTE meaning the tile identifier will range from 0 - 255. However if we are using tile data area 0x8800-0x97FF
+then the tile identifier read from the background layout is a SIGNED BYTE meaning the tile identifier will range from -127 to 127. The is the algroithm to locate the tile in memory
+region 0x8000-0x8FFF
+
+<p class = "code">
+const WORD memoryRegion = 0x8000 ;<br>
+const int sizeOfTileInMemory = 16 ;<br><br>
+
+WORD tileDataAddress = memoryRegion + (tileIdentifier*sizeOfTileInMemory) ;
+</p>
+
+So if the background layout gave us the unsigned tile identifier as 0 then the tile data would be between 0x8000-0x800F. However if we needed to lookup tile identifier 37 then
+it would be in memory region 0x8250-0x825F. This is the algorithm for calculating where the tile data is in memory region 0x8800-0x97FF
+
+<p class = "code">
+const WORD memoryRegion = 0x8800 ;<br>
+const int sizeOfTileInMemory = 16 ;<br>
+const int offset = 128 ; <br><br>
+
+WORD tileDataAddress = memoryRegion + ((tileIdentifier+offset)*sizeOfTileInMemory) ;
+</p>
+
+So if the tile identier was 0 then the tile would be in memory region 0x9000-0x900F.
+
+</p>
+
+<h3><b>How to draw a tile/sprite from memory:</b> </h3>
+<p>
+
+This area follows on from the above tile data rendering but it is also the same for sprites as you will see later on.<br><br>
+
+So what do we now know about the tile data? First is that the background layout region identifies each tile in the current background that needs to be drawn.
+The tile identity number obtained from the background layout is used to lookup the tile data in the tile data region. We know that each tile is 8x8 pixels
+and that each horizontal line in the 8x8 takes up two bytes of memory meaning that each tile in memory needs 16 bytes of data.<br><br>
+
+So if two bytes of data form one line of the tile then we need to combine these two bytes to form a break down of each pixel in the 8 pixel line. So if byte 1 looked like so:
+00110101 and data 2 looked like this 10101110 then we can combine the two together to get the following colour information:
+
+<p class = "code">
+pixel# = 1 2 3 4 5 6 7 8<br>
+data 2 = 1 0 1 0 1 1 1 0<br>
+data 1 = 0 0 1 1 0 1 0 1<br><br>
+
+
+Pixel 1 colour id: 10<br>
+Pixel 2 colour id: 00<br>
+Pixel 3 colour id: 11<br>
+Pixel 4 colour id: 01<br>
+Pixel 5 colour id: 10<br>
+Pixel 6 colour id: 11<br>
+Pixel 7 colour id: 10<br>
+Pixel 8 colour id: 01
+</p>
+
+As you can see there are only 4 possible colour id's (00,01,10,11) which map to the 4 gameboy colours (white, light grey, dark grey, black). However we still need to determine
+how to map the pixel colours id's to the correct colours. This is what palettes are used for. Palettes are not fixed, the programmer can change the mapping. This means you can change
+the colour of tiles and sprites without changing the tile data because in one state colour id 00 might represent dark grey but it might change to represent white. This is how they
+do cool special effects like when Mario becomes invincible they invert his colours every half a second to give him that flashing effect.<br><br>
+
+The background tiles only have the one monochrome colour palette stored in memory address 0xFF47. However sprites can have two palettes (discussed later). They work exactly the same
+as the background palettes except that colour white is actually transparent. The sprite palettes are located 0xFF48 and 0xFF49. <br><br>
+
+Every two bits in the palette data byte represent a colour. Bits 7-6 maps to colour id 11, bits 5-4 map to colour id 10, bits 3-2 map to colour id 01 and bits 1-0 map to colour id 00.
+Each two bits will give the colour to use like so:
+
+<p class = "block">
+00: White<br>
+01: Light Grey<br>
+10: Dark Grey<br>
+11: Black
+</p>
+
+So now we have our pixel colour ids and a way to map these id's to colours. If we take the above example of the pixel colour id's and assume that the following is the palette data
+byte: 11001001 we can now work out each colour of the pixels.
+
+<p class = "block">
+Pixel 1 colour id: 10: Means look at bits of palette data 5-4 gives colour <b>white</b><br>
+Pixel 2 colour id: 00: Means look at bits of palette data 1-0 gives colour <b>light grey</b><br>
+Pixel 3 colour id: 11: Means look at bits of palette data 7-6 gives colour <b>black</b><br>
+Pixel 4 colour id: 01: Means look at bits of palette data 3-2 gives colour <b>dark grey</b><br>
+Pixel 5 colour id: 10: Means look at bits of palette data 5-4 gives colour <b>white</b><br>
+Pixel 6 colour id: 11: Means look at bits of palette data 7-6 gives colour <b>black</b><br>
+Pixel 7 colour id: 10: Means look at bits of palette data 5-4 gives colour <b>white</b><br>
+Pixel 8 colour id: 01: Means look at bits of palette data 3-2 gives colour <b>dark grey</b><br>
+</p>
+
+So now we know what the colour ares for the tile data line. However if the palette changed from 11001001 to a different value then the colours of the tile would all completely change
+without the tile data itself changing.
+
+</p>
+
+<h3><b>Rendering the Tiles Part 2:</b> </h3>
+<p>
+
+So now we have all the information needed to render the background and the window. So taking all this information we can implement it:
+<p class = "code">
+void Emulator::RenderTiles( ) <br>
+{ <br>
+   WORD tileData = 0 ;<br>
+   WORD backgroundMemory =0 ; <br>
+   bool unsig = true ;<br><br>
+
+   // where to draw the visual area and the window<br>
+   BYTE scrollY = ReadMemory(0xFF42) ;<br>
+   BYTE scrollX = ReadMemory(0xFF43) ;<br>
+   BYTE windowY = ReadMemory(0xFF4A) ;<br>
+   BYTE windowX = ReadMemory(0xFF4B) - 7; <br><br>
+
+   bool usingWindow = false ;<br><br>
+
+   // is the window enabled?<br>
+
+   if (TestBit(lcdControl,5))<br>
+   {<br>
+     // is the current scanline we're drawing <br>
+     // within the windows Y pos?,<br>
+     if (windowY <= ReadMemory(0xFF44))<br>
+       usingWindow = true ;<br>
+   }<br><br>
+
+
+   // which tile data are we using? <br>
+   if (TestBit(lcdControl,4))<br>
+   {<br>
+     tileData = 0x8000 ;<br>
+   }<br>
+   else<br>
+   {<br>
+     // IMPORTANT: This memory region uses signed <br>
+     // bytes as tile identifiers<br>
+     tileData = 0x8800 ;<br>
+     unsig= false ;<br>
+   }<br><br>
+
+   // which background mem?<br>
+   if (false == usingWindow)<br>
+   {<br>
+     if (TestBit(lcdControl,3))<br>
+       backgroundMemory = 0x9C00 ;<br>
+     else<br>
+       backgroundMemory = 0x9800 ;<br>
+   }<br>
+   else<br>
+   {<br>
+     // which window memory?<br>
+     if (TestBit(lcdControl,6))<br>
+       backgroundMemory = 0x9C00 ;<br>
+     else<br>
+       backgroundMemory = 0x9800 ;<br>
+   }<br><br>
+
+
+   BYTE yPos = 0 ; <br><br>
+
+   // yPos is used to calculate which of 32 vertical tiles the <br>
+   // current scanline is drawing<br>
+   if (!usingWindow)<br>
+     yPos = scrollY + ReadMemory(0xFF44) ;<br>
+   else<br>
+     yPos = ReadMemory(0xFF44) - windowY;<br><br>
+
+   // which of the 8 vertical pixels of the current <br>
+   // tile is the scanline on?<br>
+   WORD tileRow = (((BYTE)(yPos/8))*32) ;<br><br>
+
+   // time to start drawing the 160 horizontal pixels<br>
+   // for this scanline<br>
+   for (int pixel = 0 ; pixel < 160; pixel++)<br>
+   {<br>
+     BYTE xPos = pixel+scrollX ;<br><br>
+
+     // translate the current x pos to window space if necessary<br>
+     if (usingWindow)<br>
+     {<br>
+       if (pixel >= windowX)<br>
+         {<br>
+           xPos = pixel - windowX ;<br>
+         }<br>
+     } <br><br>
+
+     // which of the 32 horizontal tiles does this xPos fall within?<br>
+     WORD tileCol = (xPos/8) ; <br>
+     SIGNED_WORD tileNum ;<br><br>
+
+     // get the tile identity number. Remember it can be signed<br>
+     // or unsigned<br>
+     WORD tileAddrss = backgroundMemory+tileRow+tileCol;<br>
+     if(unsig)<br>
+       tileNum =(BYTE)ReadMemory(tileAddrss);<br>
+     else<br>
+       tileNum =(SIGNED_BYTE)ReadMemory(tileAddrss );<br><br>
+
+     // deduce where this tile identifier is in memory. Remember i <br>
+     // shown this algorithm earlier<br>
+     WORD tileLocation = tileData ;<br><br>
+
+     if (unsig)<br>
+       tileLocation += (tileNum * 16) ;<br>
+     else<br>
+       tileLocation += ((tileNum+128) *16) ;<br><br>
+
+     // find the correct vertical line we're on of the <br>
+     // tile to get the tile data <br>
+     //from in memory<br>
+     BYTE line = yPos % 8 ;<br>
+     line *= 2; // each vertical line takes up two bytes of memory<br>
+     BYTE data1 = ReadMemory(tileLocation + line) ; <br>
+     BYTE data2 = ReadMemory(tileLocation + line + 1) ;<br><br>
+
+     // pixel 0 in the tile is it 7 of data 1 and data2.<br>
+     // Pixel 1 is bit 6 etc..<br>
+     int colourBit = xPos % 8 ;<br>
+     colourBit -= 7 ;<br>
+     colourBit *= -1 ;<br><br>
+
+     // combine data 2 and data 1 to get the colour id for this pixel <br>
+     // in the tile<br>
+     int colourNum = BitGetVal(data2,colourBit) ;<br>
+     colourNum <<= 1;<br>
+     colourNum |= BitGetVal(data1,colourBit) ;<br><br>
+
+     // now we have the colour id get the actual <br>
+     // colour from palette 0xFF47<br>
+     COLOUR col = GetColour(colourNum, 0xFF47) ;<br>
+     int red = 0;<br>
+     int green = 0;<br>
+     int blue = 0;<br><br>
+
+     // setup the RGB values<br>
+     switch(col)<br>
+     {<br>
+       case WHITE:	red = 255; green = 255 ; blue = 255; break ;<br>
+       case LIGHT_GRAY:red = 0xCC; green = 0xCC ; blue = 0xCC; break ;<br>
+       case DARK_GRAY:	red = 0x77; green = 0x77 ; blue = 0x77; break ;<br>
+     }<br><br>
+
+     int finaly = ReadMemory(0xFF44) ;<br><br>
+
+     // safety check to make sure what im about <br>
+     // to set is int the 160x144 bounds<br>
+     if ((finaly<0)||(finaly>143)||(pixel<0)||(pixel>159))<br>
+     {<br>
+       continue ;<br>
+     }<br><br>
+
+     m_ScreenData[pixel][finaly][0] = red ;<br>
+     m_ScreenData[pixel][finaly][1] = green ;<br>
+     m_ScreenData[pixel][finaly][2] = blue ;<br>
+   }<br>
+}
+</p>
+
+I know at first that can seem daunting but as long as you understand the logic to drawing the tiles
+just keep looking at the above code and it'll make sense. I've yet to implement the GetColour function which
+is used in the above code. This function takes a colour ID then uses the monochrome palette to deduce what colour
+that colour ID relates to. Remember that this is a dynamic palette so the colour id's will map to different colours
+during different parts of the game.
+
+<p class ="code">
+void COLOUR Emulator::GetColour(BYTE colourNum, WORD address) const<br>
+{<br>
+   COLOUR res = WHITE ;<br>
+   BYTE palette = ReadMemory(address) ;<br>
+   int hi = 0 ;<br>
+   int lo = 0 ;<br><br>
+
+   // which bits of the colour palette does the colour id map to?<br>
+   switch (colourNum) <br>
+   {<br>
+     case 0: hi = 1 ; lo = 0 ;break ;<br>
+     case 1: hi = 3 ; lo = 2 ;break ; <br>
+     case 2: hi = 5 ; lo = 4 ;break ; <br>
+     case 3: hi = 7 ; lo = 6 ;break ;<br>
+   }<br><br>
+
+   // use the palette to get the colour<br>
+   int colour = 0;<br>
+   colour = BitGetVal(palette, hi) << 1;<br>
+   colour |= BitGetVal(palette, lo) ;<br><br>
+
+   // convert the game colour to emulator colour<br>
+   switch (colour)<br>
+   {<br>
+     case 0: res = WHITE ;break ;<br>
+     case 1: res = LIGHT_GRAY ;break ;<br>
+     case 2: res = DARK_GRAY ;break ;<br>
+     case 3: res = BLACK ;break ;<br>
+   }<br><br>
+
+   return res ;<br>
+}
+
+</p>
+
+Now you should have everything you need to render the tiles
+
+</p>
+
+<h3><b>Rendering the Sprites:</b> </h3>
+<p>
+
+Rendering the sprites is a bit more difficult then the tiles but luckily the sprite data is located in memory address 0x8000-0x8FFF which means
+the sprite identifiers are all unsigned values which makes finding them easier. There are 40 tiles located in memory region 0x8000-0x8FFF and we
+need to scan through them all and check their attributes to find where they need to be rendered. The sprite attributes are found in the sprite attribute
+table (DUH!) located in memory region 0xFE00-0xFE9F. In this memory region each sprite has 4 bytes of attributes associtated to it, these are:
+
+<p class="block">
+0: Sprite Y Position: Position of the sprite on the Y axis of the viewing display minus 16<br>
+1: Sprite X Position: Position of the sprite on the X axis of the viewing display minus 8<br>
+2: Pattern number: This is the sprite identifier used for looking up the sprite data in memory region 0x8000-0x8FFF<br>
+3: Attributes: These are the attributes of the sprite, discussed later.
+</p>
+
+A sprite can either be 8x8 pixels or 8x16 pixels, this can be determined by the sprites attributes. This is a break down of the sprites attributes:
+
+<p class="block">
+Bit7: Sprite to Background Priority <br>
+Bit6: Y flip<br>
+Bit5: X flip<br>
+Bit4: Palette number<br>
+Bit3: Not used in standard gameboy<br>
+Bit2-0: Not used in standard gameboy
+</p>
+
+<b>Sprite to Background Priority:</b> If this flag is set to 0 then sprite is always rendered above the background and the window. However if it is set to
+1 then the sprite is hidden behind the background and window unless the colour of the background or window is white, then it is still rendered on top.<br>
+<b>Y flip:</b> If this bit is set then the sprite is mirrored vertically. This will be used in the game to turn sprites upside down.<br>
+<b>X flip:</b> If this bit is set then the sprite is mirrored horizontally. This will be used in the game to change the direction of the characters etc<br>
+<b>Palette Number:</b> Sprites can either get their monochrome palettes from 0xFF48 or 0xFF49. If this bit is 0 then it gets it palette from 0xFF48 otherwise 0xFF49<br><br>
+
+I find the best way to handle the X and Y flipping is to read the sprite data in backwards as this will give the flip effect. <br><br>
+
+We now have enough information to render the sprites. This is done almost identically to the rendering of the tiles, except that instead of looping through
+a layout region in memory to get the next identifier of the tile to draw, we have to loop through all 40 sprites and detect which ones are visible and are intercepting
+with the current scanline.
+
+<p class="code">
+
+void Emulator::RenderSprites( ) <br>
+{<br>
+   bool use8x16 = false ;<br>
+   if (TestBit(lcdControl,2))<br>
+     use8x16 = true ;<br><br>
+
+   for (int sprite = 0 ; sprite < 40; sprite++)<br>
+   { <br>
+     // sprite occupies 4 bytes in the sprite attributes table<br>
+     BYTE index = sprite*4 ; <br>
+     BYTE yPos = ReadMemory(0xFE00+index) - 16;<br>
+     BYTE xPos = ReadMemory(0xFE00+index+1)-8;<br>
+     BYTE tileLocation = ReadMemory(0xFE00+index+2) ;<br>
+     BYTE attributes = ReadMemory(0xFE00+index+3) ;<br><br>
+
+     bool yFlip = TestBit(attributes,6) ;<br>
+     bool xFlip = TestBit(attributes,5) ;<br><br>
+
+     int scanline = ReadMemory(0xFF44);<br><br>
+
+     int ysize = 8; <br>
+     if (use8x16)<br>
+       ysize = 16;<br><br>
+
+     // does this sprite intercept with the scanline?<br>
+     if ((scanline >= yPos) && (scanline < (yPos+ysize)))<br>
+     {<br>
+       int line = scanline - yPos ;<br><br>
+
+       // read the sprite in backwards in the y axis<br>
+       if (yFlip)<br>
+       {<br>
+         line -= ysize ;<br>
+         line *= -1 ;<br>
+       }<br><br>
+
+       line *= 2; // same as for tiles<br>
+       WORD dataAddress = (0x8000 + (tileLocation * 16)) + line ; <br>
+       BYTE data1 = ReadMemory( dataAddress  ) ;<br>
+       BYTE data2 = ReadMemory( dataAddress +1 ) ;<br><br>
+
+       // its easier to read in from right to left as pixel 0 is <br>
+       // bit 7 in the colour data, pixel 1 is bit 6 etc...<br>
+       for (int tilePixel = 7; tilePixel >= 0; tilePixel--)<br>
+       { <br>
+         int colourbit = tilePixel ;<br>
+         // read the sprite in backwards for the x axis <br>
+         if (xFlip) <br>
+         {<br>
+           colourbit -= 7 ;<br>
+           colourbit *= -1 ;<br>
+         }<br><br>
+
+         // the rest is the same as for tiles<br>
+         int colourNum = BitGetVal(data2,colourbit) ;<br>
+         colourNum <<= 1;<br>
+         colourNum |= BitGetVal(data1,colourbit) ;<br><br>
+
+         WORD colourAddress = TestBit(attributes,4)?0xFF49:0xFF48 ;<br>
+         COLOUR col=GetColour(colourNum, colourAddress ) ;<br><br>
+
+         // white is transparent for sprites.<br>
+         if (col == WHITE)<br>
+           continue ;<br><br>
+
+         int red = 0;<br>
+         int green = 0;<br>
+         int blue = 0;<br><br>
+
+         switch(col)<br>
+         {<br>
+           case WHITE: red =255;green=255;blue=255;break ;<br>
+           case LIGHT_GRAY:red =0xCC;green=0xCC ;blue=0xCC;break ;<br>
+           case DARK_GRAY:red=0x77;green=0x77;blue=0x77;break ;<br>
+         }<br><br>
+
+         int xPix = 0 - tilePixel ;<br>
+         xPix += 7 ;<br><br>
+
+         int pixel = xPos+xPix ;<br><br>
+
+         // sanity check<br>
+         if ((scanline<0)||(scanline>143)||(pixel<0)||(pixel>159))<br>
+         {<br>
+           continue ;<br>
+         }<br><br>
+
+         m_ScreenData[pixel][scanline][0] = red ;<br>
+         m_ScreenData[pixel][scanline][1] = green ;<br>
+         m_ScreenData[pixel][scanline][2] = blue ;<br>
+       }<br>
+     }<br>
+   }<br>
+}
+
+</p>
+
+Thats everything you need to get the graphics emulating correctly. Now all you have to do is bit-blit m_ScreenData to the display. I personally use
+glDrawPixels but you can use what you want. Head over here to the next chapter on <a href="joypad.html">Joypad</a>
+
+<br><br>
+</p>
+
+
+
+</div>
+
+<div id="sidebar">
+<h3>Gameboy Emulation:</h3>
+
+<p>
+<a class="sidelink" href="beginning.html">Getting Started</a><span class="hide"> | </span>
+<a class="sidelink" href="hardware.html">The Hardware</a><span class="hide"> | </span>
+<a class="sidelink" href="memory.html">Memory Control and Map</a><span class="hide"> | </span>
+<a class="sidelink" href="banking.html">ROM and RAM Banking</a><span class="hide"> | </span>
+<a class="sidelink" href="timers.html">The Timers</a><span class="hide"> | </span>
+<a class="sidelink" href="interupts.html">Interupts</a><span class="hide"> | </span>
+<a class="sidelink" href="lcd.html">LCD</a><span class="hide"> | </span>
+<a class="sidelink" href="dma.html">DMA Transfer</a><span class="hide"> | </span>
+<a class="sidelink" href="graphics.html">Graphic Emulation</a><span class="hide"> | </span>
+<a class="sidelink" href="joypad.html">Joypad Emulation</a><span class="hide"> | </span>
+<a class="sidelink" href="opcodes.html">Opcode Examples</a><span class="hide"> | </span>
+<a class="sidelink" href="finished.html">Finished Product</a><span class="hide"> | </span>
+
+</p>
+
+</div>
+    
+<div id="footer">
+Copyright © 2008 codeslinger.co.uk
+</div>
+
+</div>
+</body>
+
+<!-- Mirrored from www.codeslinger.co.uk/pages/projects/gameboy/graphics.html by HTTrack Website Copier/3.x [XR&CO'2010], Thu, 11 Aug 2011 17:34:19 GMT -->
+</html>
+
+

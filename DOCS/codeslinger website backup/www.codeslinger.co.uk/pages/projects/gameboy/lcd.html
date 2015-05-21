@@ -1,0 +1,300 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<!-- Mirrored from www.codeslinger.co.uk/pages/projects/gameboy/lcd.html by HTTrack Website Copier/3.x [XR&CO'2010], Thu, 11 Aug 2011 17:34:18 GMT -->
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="description" content="_Emulation Programming_" />
+<meta name="keywords" content="_Emulation,Chip8,Gameboy,NES,SNES,Genesis,Master,System,Mega,Drive_" />
+<meta name="author" content="CodeSlinger /" />
+<link rel="stylesheet" type="text/css" href="../../../css.css" media="screen,projection" title="CodeSlinger (screen)" />
+<link rel="stylesheet" type="text/css" href="../../../print.css" media="print" />
+<title>codeslinger.co.uk</title>
+</head>
+
+<body>
+<div>
+<br><br>
+</div>
+
+<div id="container">
+<div id="logo">
+<h1><a href="../../../index-2.html">codeslinger.co.uk</a></h1>
+</div>
+
+<div id="navitabs">
+<h2 class="hide">Site menu:</h2>
+<a class="navitab" href="../../../index-3.html">Home</a><span class="hide"> | </span>
+<a class="navitab" href="../../basics.html">Basics</a><span class="hide"> | </span>
+<a class="navitab" href="../zuko.html">Zuko</a><span class="hide"> | </span>
+<a class="navitab" href="../megadrive.html">Mega Drive/Genesis</a><span class="hide"> | </span>
+<a class="navitab" href="../mastersystem.html">Master System</a><span class="hide"> | </span>
+<a class="activenavitab" href="../gameboy.html">Gameboy</a><span class="hide"> | </span>
+<a class="navitab" href="../chip8.html">Chip8</a><span class="hide"> | </span>
+<a class="navitab" href="../../blog/index.html">Blog</a><span class="hide"> | </span>
+</div>
+	
+<div id="desc">
+<h2>codeslinger.co.uk</h2>
+<p> Gameboy - LCD.</p>
+
+</div>
+
+<div id="main">
+
+<h3><b>Scanlines:</b></h3>
+<p>
+
+The screen resolution is 160x144 meaning there are 144 visible scanlines. The Gameboy draws each scanline one at a time starting from 0 to 153, this means
+there are 144 visible scanlines and 8 invisible scanlines. When the current scanline is between 144 and 153 this is the vertical blank period. The current scanline
+is stored in register address 0xFF44. The pandocs tell us
+that it takes 456 cpu clock cycles to draw one scanline and move onto the next, so we will need a counter to know when to move onto the next line, we'll call
+this m_ScanlineCounter. Just like the timer and divider registers we can control the scanline counter by subtracting its value by the amount of clock cycles the last
+opcode took to exectue. If we look at our main emulator update loop that we emulated in the <a href="beginning.html">Getting Started</a> chapter you can see that the
+UpdateGraphics function gets passed the amount of cycles the last opcode took so we can accurately keep the graphics in sync with the cpu. This is how the UpdateGraphics
+function is emulated:
+
+<p class = "code">
+
+void Emulator::UpdateGraphics(int cycles)<br>
+{<br>
+   SetLCDStatus( ) ; <br><br>
+
+   if (IsLCDEnabled())<br>
+     m_ScalineCounter -= cycles ;<br>
+   else <br>
+     return ; <br><br>
+
+   if (m_ScalineCounter <= 0)<br>
+   {<br>
+
+     // time to move onto next scanline<br>
+     m_Rom[0xFF44]++; <br>
+     BYTE currentline = ReadMemory(0xFF44) ;<br><br>
+
+     m_ScalineCounter = 456 ;<br><br>
+
+     // we have entered vertical blank period<br>
+     if (currentline == 144)<br>
+       RequestInterupt(0) ;<br><br>
+
+      // if gone past scanline 153 reset to 0<br>
+      else if (currentline > 153)<br>
+        m_Rom[0xFF44]=0<br><br>
+
+     // draw the current scanline <br>
+     else if (currentline < 144)<br>
+       DrawScanLine() ; <br>
+
+   }<br>
+
+}
+
+</p>
+
+There is quite a bit there that I will give implementations to later so for now I'll just explain it. If the lcd display
+is enabled then we need to update the scanline counter by subtracting the last opcodes cycle time from it. If this makes
+m_ScanlineCounter go negative then it is time to move onto the next scanline. Register 0xFF44 is the current scanline so
+we increment this onto then next scanline. If the new scanline is 144 then this is the beginning of the vetical blank
+interupt so we need to request this interupt (remember that the vblank interupt is bit 0). If you are unsure why this is
+then re-read the <a href="interupts.html">interupts</a> chapter. If the current scanline is greater than 153 then it must be
+reset to 0. However if the current scanline is less than 144 then it is one of the visible scanlines and needs to be rendered
+to the screen. This will be explained in the chapter called <a href="graphics.html">Graphic Emulation</a>. The reason why
+I access memory directly when writing to the current scanline address (0xFF44) rather than using WriteMemory is because
+when the game tries to write to 0xFF44 it resets the current scaline to 0, so we cannot use WriteMemory to increment the scanline
+as it will always set it to 0. Speaking of which the following needs to be added to the WriteMemory function:
+
+<p class = "code">
+// reset the current scanline if the game tries to write to it<br>
+else if (address == 0xFF44)<br>
+{<br>
+   m_Rom[address] = 0 ;<br>
+}
+</p>
+
+</p>
+
+<h3><b>Setting the LCD Status:</b> </h3>
+<p>
+The memory address 0xFF41 holds the current status of the LCD. The LCD goes through 4 different modes. These are "V-Blank Period", "H-Blank Period", "Searching Sprite Attributes" and "Transferring
+Data to LCD Driver". Bit 1 and 0 of the lcd status at address 0xFF41 reflects the current LCD mode like so:
+
+<p class = "block">
+00: H-Blank <br>
+01: V-Blank <br>
+10: Searching Sprites Atts <br>
+11: Transfering Data to LCD Driver
+</p>
+
+When starting a new scanline the lcd status is set to 2, it then moves on to 3 and then to 0. It then goes back to and continues then pattern until
+the v-blank period starts where it stays on mode 1. When the vblank period ends it goes back to 2 and continues this pattern over and over.
+As previously mentioned it takes 456 clock cycles to draw one scanline before moving onto the next. This can be split down into different sections
+which will represent the different modes. Mode 2 (Searching Sprites Atts) will take the first 80 of the 456 clock cycles. Mode 3 (Transfering to LCD Driver) will
+take 172 clock cycles of the 456 and the remaining clock cycles of the 456 is for Mode 0 (H-Blank). If this is confusing then please bare with me as it will all be come
+clear when you see the code. <br><br>
+
+When the LCD status changes its mode to either Mode 0, 1 or 2 then this can cause an LCD Interupt Request to happen. Bits 3, 4 and 5 of the LCD Status register (0xFF41) are
+interupt enabled flags (the same as the Interupt Enabled Register 0xFFFF, see <a href="interupts.html">interupts</a> chapter). These bits are set by the game not the emulator and
+they represent the following:
+
+<p class = "block">
+Bit 3: Mode 0 Interupt Enabled<br>
+Bit 4: Mode 1 Interupt Enabled<br>
+Bit 5: Mode 2 Interupt Enabled
+</p>
+
+So when the mode changes to 0,1 or 2 then if the corresponding bit 3,4,5 is set then an LCD interupt is requested. This is only tested when the LCD mode changes to 0,1 or 2 and not
+the duration of these modes.<br><br>
+
+One important part to emulate with the lcd modes is when the lcd is disabled the mode must be set to mode 1. If you dont do this then you will spend hours like I did wondering why
+Mario2 wont play past the title screen. You also need to reset the m_ScanlineCounter and current scanline<br><br>
+
+The last part of the LCD status register (0xFF41) is the Coincidence flag. Basically Bit 2 of the status register is set to 1 if register (0xFF44) is the same value as (0xFF45) otherwise
+it is set to 0. Bit 6 of the LCD status register (0xFF44) is the same as the interupt enabled bits 3-5 but it isnt to do with the current lcd mode it is to do with the bit 2 coincidence flag.
+If the conicidence flag (bit 2) is set and the conincidence interupt enabled flag (bit 6) is set then an LCD Interupt is requested. The conicidence flag means the current scanline (0xFF44) is the
+same as a scanline the game is interested in (0xFF45). The reason why the game would be interested in the current scanline is to do special effects. So when 0xFF44 == 0xFF45 then an interupt can be
+requested to let the game know that the values are the same.<br><br>
+
+We now have enough information to put all this together and implement the SetLCDStatus function
+
+<p class = "code">
+
+void Emulator::SetLCDStatus( ) <br>
+{<br>
+   BYTE status = ReadMemory(0xFF41) ; <br>
+   if (false == IsLCDEnabled()) <br>
+   { <br>
+     // set the mode to 1 during lcd disabled and reset scanline<br>
+     m_ScanlineCounter = 456 ; <br>
+     m_Rom[0xFF44] = 0 ; <br>
+     status &= 252 ;<br>
+     status = BitSet(status, 0) ;<br>
+     WriteMemory(0xFF41,status) ;<br>
+     return ;<br>
+   }<br><br>
+
+   BYTE currentline = ReadMemory(0xFF44) ; <br>
+   BYTE currentmode = status & 0x3 ;<br><br>
+
+   BYTE mode = 0 ;<br>
+   bool reqInt = false ; <br><br>
+
+   // in vblank so set mode to 1 <br>
+   if (currentline >= 144)<br>
+   {
+     mode = 1;<br>
+     status = BitSet(status,0) ;<br>
+     status = BitReset(status,1) ;<br>
+     reqInt = TestBit(status,4) ; <br>
+   }<br>
+   else<br>
+   {<br>
+     int mode2bounds = 456-80 ;<br>
+     int mode3bounds = mode2bounds - 172 ; <br><br>
+
+     // mode 2<br>
+     if (m_ScanlineCounter >= mode2bounds)<br>
+     { <br>
+       mode = 2 ;<br>
+       status = BitSet(status,1) ;<br>
+       status = BitReset(status,0) ;<br>
+       reqInt = TestBit(status,5) ; <br>
+     }<br>
+     // mode 3<br>
+     else if(m_ScanlineCounter >= mode3bounds)<br>
+     {<br>
+       mode = 3 ;<br>
+       status = BitSet(status,1) ;<br>
+       status = BitSet(status,0) ;<br>
+     }<br>
+     // mode 0<br>
+     else<br>
+     {<br>
+       mode = 0;<br>
+       status = BitReset(status,1) ;<br>
+       status = BitReset(status,0) ;<br>
+       reqInt = TestBit(status,3) ; <br>
+     }<br>
+   }<br><br>
+
+   // just entered a new mode so request interupt<br>
+   if (reqInt && (mode != currentmode))<br>
+     RequestInterupt(1) ;<br><br>
+
+   // check the conincidence flag<br>
+   if (ly == ReadMemory(0xFF45))<br>
+   {<br>
+     status = BitSet(status,2) ;<br>
+     if (TestBit(status,6))<br>
+       RequestInterupt(1) ;<br>
+   }<br>
+   else<br>
+   {<br>
+     status = BitReset(status,2) ;<br>
+   }<br>
+   WriteMemory(0xFF41,status) ; <br>
+}
+
+</p>
+
+Hopefully that all makes sense. If not re-read this section until it does. It took awhile for me to realise how the lcd status works
+
+</p>
+
+<h3><b>The LCD Control:</b> </h3>
+<p>
+The LCD Control register (0xFF40) will be covered in detail in the chapter called <a href="graphics.html">Graphic Emulation</a> however
+the above code uses the function IsLCDEnabled() a lot which I've yet to implement and this relies on the LCD Control register. Bit 7 of this register
+is responsible for enabling and disbaling the lcd so we can implement IsLCDEnabled() like so:
+
+<p class = "code">
+bool Emulator::IsLCDEnabled() const<br>
+{<br>
+   return TestBit(ReadMemory(0xFF40),7) ;<br>
+}
+</p>
+
+Thats it for the LCD chapter onto <a href="dma.html">DMA Transfer</a>
+
+<br><br>
+<p>
+
+<br><br>
+</p>
+
+
+
+</div>
+
+<div id="sidebar">
+<h3>Gameboy Emulation:</h3>
+
+<p>
+<a class="sidelink" href="beginning.html">Getting Started</a><span class="hide"> | </span>
+<a class="sidelink" href="hardware.html">The Hardware</a><span class="hide"> | </span>
+<a class="sidelink" href="memory.html">Memory Control and Map</a><span class="hide"> | </span>
+<a class="sidelink" href="banking.html">ROM and RAM Banking</a><span class="hide"> | </span>
+<a class="sidelink" href="timers.html">The Timers</a><span class="hide"> | </span>
+<a class="sidelink" href="interupts.html">Interupts</a><span class="hide"> | </span>
+<a class="sidelink" href="lcd.html">LCD</a><span class="hide"> | </span>
+<a class="sidelink" href="dma.html">DMA Transfer</a><span class="hide"> | </span>
+<a class="sidelink" href="graphics.html">Graphic Emulation</a><span class="hide"> | </span>
+<a class="sidelink" href="joypad.html">Joypad Emulation</a><span class="hide"> | </span>
+<a class="sidelink" href="opcodes.html">Opcode Examples</a><span class="hide"> | </span>
+<a class="sidelink" href="finished.html">Finished Product</a><span class="hide"> | </span>
+
+</p>
+
+</div>
+    
+<div id="footer">
+Copyright © 2008 codeslinger.co.uk
+</div>
+
+</div>
+</body>
+
+<!-- Mirrored from www.codeslinger.co.uk/pages/projects/gameboy/lcd.html by HTTrack Website Copier/3.x [XR&CO'2010], Thu, 11 Aug 2011 17:34:18 GMT -->
+</html>
+
+

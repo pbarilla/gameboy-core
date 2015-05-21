@@ -1,0 +1,192 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" dir="ltr">
+
+<head profile="http://gmpg.org/xfn/11">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+<title>Emulator Development   &raquo; 2008&raquo; August</title>
+
+<link rel="stylesheet" href="wp-content/themes/default/style.css" type="text/css" media="screen" />
+<link rel="alternate" type="application/rss+xml" title="Emulator Development RSS Feed" href="indexd784.html?feed=rss2" />
+<link rel="pingback" href="xmlrpc.html" />
+
+<style type="text/css" media="screen">
+
+	#page { background: url("wp-content/themes/default/images/kubrickbgwide.jpg") repeat-y top; border: none; }
+
+</style>
+
+<link rel="EditURI" type="application/rsd+xml" title="RSD" href="xmlrpc0db0.php?rsd" />
+<link rel="wlwmanifest" type="application/wlwmanifest+xml" href="wp-includes/wlwmanifest.xml" /> 
+<meta name="generator" content="WordPress 2.5.1" />
+
+</head>
+<body>
+<div id="page">
+
+
+<div id="header">
+	<div id="headerimg">
+		<h1><a href="index.html">Emulator Development</a></h1>
+		<div class="description">The art of emulator programming</div>
+	</div>
+</div>
+<hr />
+
+	<div id="content" class="narrowcolumn">
+
+		
+ 	   	  		<h2 class="pagetitle">Archive for August, 2008</h2>
+ 	  
+
+		<div class="navigation">
+			<div class="alignleft"></div>
+			<div class="alignright"></div>
+		</div>
+
+				<div class="post">
+				<h3 id="post-12"><a href="index678b.html?p=12" rel="bookmark" title="Permanent Link to Zuko">Zuko</a></h3>
+				<small>Wednesday, August 27th, 2008</small>
+
+				<div class="entry">
+					<p>Well sourceforge accepted my project. The project is called Zuko and its website can be found <a href="http://zuko.sourceforge.net/">here</a>.</p>
+<p>Zuko is a multi game console emulator. At first it will fully emulate the Gameboy, Sega Master System and Sega Mega Drive/Genesis. However this is not the main reason for Zuko being created. With all the next generation consoles being released (XBOX 360, playstation 3 etc) in my opinion the emulation scene is struggling to survive. It is no longer possible for one programmer to emulate nextgen consoles. It will take a team of talented emulator programmers years to do. Zuko&#8217;s main purpose is to make the learning curve from new emulator programmers less steep so they can develop the skills needed for the emulation scene to continue.</p>
+<p>Zuko will allow the user to debug the ROMS and give them control over the console. It will have a tile and sprite viewer and allow the user to change their attributes (flips and zooms etc) as well as controlling the scrolling and the palette. The user can also edit the game speed and control the interupts. They will be able to view the register states as well as changing them to see how they affect the games. There will also be a lot more options aswell as being able to control the way the emulator works, for example switching between Interpreter to Binary Translation along with dynamic recompilation and threaded interpretation. The project will be completely open source and I will supply the svn repository details for Zuko and all the individual emulators. When I get the svn repo set up I&#8217;ll post the link straight away so you can all check my progress. I plan to completely finish the Gameboy, Master System and Mega Drive emulators first before integrating them into Zuko.</p>
+<p>Future version of Zuko will support NES and the Nintendo 64 (now that will be one hell of a project!). </p>
+<p>Oh and also Zuko can be used for a normal emulator to relive gaming classics! Like all my other emulators it will be programmed in C++ and will run under Windows and GNU/Linux.</p>
+<p>Finally these are the two screenshots I promised in my last post</p>
+<p><img src="../../../../www.codeslinger.co.uk/pages/projects/mastersystem/images/greatsoccer.png" alt="GreatSoccer on the Master System" /></p>
+<p><img src="../../../../www.codeslinger.co.uk/pages/projects/mastersystem/images/ghosthouse.png" alt="Ghost House on the Master System" /></p>
+				</div>
+
+				<p class="postmetadata"> Posted in <a href="indexb946.html?cat=5" title="View all posts in Zuko" rel="category">Zuko</a> |   <a href="index678b.html?p=12#respond" title="Comment on Zuko">No Comments &#187;</a></p>
+
+			</div>
+
+				<div class="post">
+				<h3 id="post-11"><a href="index5757.html?p=11" rel="bookmark" title="Permanent Link to Sourceforge">Sourceforge</a></h3>
+				<small>Tuesday, August 26th, 2008</small>
+
+				<div class="entry">
+					<p>I am currently awaiting permission from sourceforge to host my emulation project. When and if they accept I&#8217;ll put the svn details of my master system emulator on here so you can keep track of my progress. Read permissions only of course <img src='wp-includes/images/smilies/icon_smile.gif' alt=':-)' class='wp-smiley' /> </p>
+<p>If I get this sourceforge project it will be more than just a master system emulator. I&#8217;ll explain more when they have accepted the project. Fingers crossed.</p>
+<p>On a side note I have two master system games emulating up to the first screen display. These games are &#8220;Great Soccer&#8221; and &#8220;Ghost House&#8221;.</p>
+<p>Screenshots coming soon.</p>
+<p>CS</p>
+				</div>
+
+				<p class="postmetadata"> Posted in <a href="indexb31a.html?cat=1" title="View all posts in Uncategorized" rel="category">Uncategorized</a> |   <a href="index5757.html?p=11#respond" title="Comment on Sourceforge">No Comments &#187;</a></p>
+
+			</div>
+
+				<div class="post">
+				<h3 id="post-10"><a href="index64b4.html?p=10" rel="bookmark" title="Permanent Link to Master System VDP Update">Master System VDP Update</a></h3>
+				<small>Saturday, August 23rd, 2008</small>
+
+				<div class="entry">
+					<p>I&#8217;ve made a bit of progress on my master system in the last 24 hours. So far I&#8217;ve managed to get 2 VDP test roms running perfectly, a third test rom running but with glitches and the Z80 CPU Instruction Exerciser ROM running. So far the Z80 Instruction Exerciser ROM runs but every instruction check fails. This is not because all the instructions are incorrect (because if that was the case I&#8217;d never see any ROMS load), so I guess the problem is with the checking algorithm it uses. I must have implemented one of the opcodes incorrectly which does the checking, therefore everything appears to be incorrect. Hopefully soon I can upload some screenshots of either a game screen or the Z80 Instruction Exerciser passing some tests.</p>
+				</div>
+
+				<p class="postmetadata"> Posted in <a href="indexaa1e.html?cat=4" title="View all posts in Sega Master System" rel="category">Sega Master System</a> |   <a href="index64b4.html?p=10#respond" title="Comment on Master System VDP Update">No Comments &#187;</a></p>
+
+			</div>
+
+				<div class="post">
+				<h3 id="post-9"><a href="indexb5fb.html?p=9" rel="bookmark" title="Permanent Link to Starting the Master System">Starting the Master System</a></h3>
+				<small>Monday, August 18th, 2008</small>
+
+				<div class="entry">
+					<p>Over the past few days I&#8217;ve had a few hours spare to start reading about the sega master system. The CPU is a Z80 which is what the Gameboy CPU is similar to, so I have already implemented 50% of the instructions. I have found the website <a href="http://www.smspower.org/dev/docs/">SMS Power</a> very useful for the SMS documentation. Unlike the gameboy there is not one document which covers everything you need to emulate the SMS so I&#8217;m using about 7 different resources to learn from, which I quite like doing really as it feels less spoon fed this way.</p>
+<p>When I first started looking into emulating the Z80 I thought it would be easier than the Gameboy because of the fewer interupts and I found the gameboy quite quirky, however this is not the case. The other 50% of the Z80 cpu instructions I have to implement are more complicated than the 50% I&#8217;ve already implemented. Plus there are another 5 flags that need to be set correctly. The 0xFD and 0xDD opcodes make the cpu feel quite bloated aswell. The VDP seems much more complicated than the Gameboy and so do the way the interupts work. I&#8217;m still confident that I can finish this system in two months including sound but only if I have the time to do work on it, but it wont be as easy as I first thought.</p>
+<p>I have got a few test roms from that SMS Power site which I have emulated all the opcodes for, so now I just need to get the VDP showing something for them. Once I have emulated the VDP I should be able to run ZEXALL which is a Z80 test rom, which will be really usefull for eliminating cpu bugs.</p>
+<p>Fun fun fun</p>
+				</div>
+
+				<p class="postmetadata"> Posted in <a href="indexaa1e.html?cat=4" title="View all posts in Sega Master System" rel="category">Sega Master System</a> |   <a href="indexb5fb.html?p=9#respond" title="Comment on Starting the Master System">No Comments &#187;</a></p>
+
+			</div>
+
+		
+		<div class="navigation">
+			<div class="alignleft"></div>
+			<div class="alignright"></div>
+		</div>
+
+	
+	</div>
+
+	<div id="sidebar">
+		<ul>
+						<li>
+				<form method="get" id="searchform" action="http://codeslinger.co.uk/pages/blog/wordpress/">
+<div><input type="text" value="" name="s" id="s" />
+<input type="submit" id="searchsubmit" value="Search" />
+</div>
+</form>
+			</li>
+
+			<!-- Author information is disabled per default. Uncomment and fill in your details if you want to use it.
+			<li><h2>Author</h2>
+			<p>A little something about you, the author. Nothing lengthy, just an overview.</p>
+			</li>
+			-->
+
+			 <li>
+
+						<p>You are currently browsing the <a href="index.html">Emulator Development</a> blog archives
+			for August, 2008.</p>
+
+			
+			</li> 
+			
+			<li><h2>Archives</h2>
+				<ul>
+					<li><a href='indexd189.html?m=201005' title='May 2010'>May 2010</a></li>
+	<li><a href='indexc36d.html?m=200905' title='May 2009'>May 2009</a></li>
+	<li><a href='index17e8.html?m=200904' title='April 2009'>April 2009</a></li>
+	<li><a href='index10a5.html?m=200903' title='March 2009'>March 2009</a></li>
+	<li><a href='index8988.html?m=200902' title='February 2009'>February 2009</a></li>
+	<li><a href='index7866.html?m=200812' title='December 2008'>December 2008</a></li>
+	<li><a href='index55f6.html?m=200811' title='November 2008'>November 2008</a></li>
+	<li><a href='indexa7bc.html?m=200810' title='October 2008'>October 2008</a></li>
+	<li><a href='indexe77c.html?m=200809' title='September 2008'>September 2008</a></li>
+	<li><a href='indexcffc.html?m=200808' title='August 2008'>August 2008</a></li>
+	<li><a href='index0e62.html?m=200807' title='July 2008'>July 2008</a></li>
+				</ul>
+			</li>
+
+			<li class="categories"><h2>Categories</h2><ul>	<li class="cat-item cat-item-3"><a href="index81ea.html?cat=3" title="View all posts filed under Gameboy">Gameboy</a> (6)
+</li>
+	<li class="cat-item cat-item-4"><a href="indexaa1e.html?cat=4" title="View all posts filed under Sega Master System">Sega Master System</a> (13)
+</li>
+	<li class="cat-item cat-item-1"><a href="indexb31a.html?cat=1" title="View all posts filed under Uncategorized">Uncategorized</a> (4)
+</li>
+	<li class="cat-item cat-item-5"><a href="indexb946.html?cat=5" title="View all posts filed under Zuko">Zuko</a> (1)
+</li>
+</ul></li>
+			
+					</ul>
+	</div>
+
+
+
+<hr />
+<div id="footer">
+<!-- If you'd like to support WordPress, having the "powered by" link somewhere on your blog is the best way; it's our only promotion or advertising. -->
+	<p>
+		Emulator Development is proudly powered by
+		<a href="http://wordpress.org/">WordPress</a>
+		<br /><a href="indexd784.html?feed=rss2">Entries (RSS)</a>
+		and <a href="indexa6da.html?feed=comments-rss2">Comments (RSS)</a>.
+		<!-- 20 queries. 0.201 seconds. -->
+	</p>
+</div>
+</div>
+
+<!-- Gorgeous design by Michael Heilemann - http://binarybonsai.com/kubrick/ -->
+
+		</body>
+
+<!-- Mirrored from codeslinger.co.uk/pages/blog/wordpress/?m=200808 by HTTrack Website Copier/3.x [XR&CO'2010], Thu, 11 Aug 2011 17:34:50 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8"><!-- /Added by HTTrack -->
+</html>

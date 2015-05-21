@@ -1,0 +1,172 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" dir="ltr">
+
+<head profile="http://gmpg.org/xfn/11">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+<title>Emulator Development   &raquo; Sega Master System</title>
+
+<link rel="stylesheet" href="wp-content/themes/default/style.css" type="text/css" media="screen" />
+<link rel="alternate" type="application/rss+xml" title="Emulator Development RSS Feed" href="indexd784.html?feed=rss2" />
+<link rel="pingback" href="xmlrpc.html" />
+
+<style type="text/css" media="screen">
+
+	#page { background: url("wp-content/themes/default/images/kubrickbgwide.jpg") repeat-y top; border: none; }
+
+</style>
+
+<link rel="EditURI" type="application/rsd+xml" title="RSD" href="xmlrpc0db0.php?rsd" />
+<link rel="wlwmanifest" type="application/wlwmanifest+xml" href="wp-includes/wlwmanifest.xml" /> 
+<meta name="generator" content="WordPress 2.5.1" />
+
+</head>
+<body>
+<div id="page">
+
+
+<div id="header">
+	<div id="headerimg">
+		<h1><a href="index.html">Emulator Development</a></h1>
+		<div class="description">The art of emulator programming</div>
+	</div>
+</div>
+<hr />
+
+	<div id="content" class="narrowcolumn">
+
+		
+ 	   	  		<h2 class="pagetitle">Archive for the &#8216;Sega Master System&#8217; Category</h2>
+ 	  
+
+		<div class="navigation">
+			<div class="alignleft"></div>
+			<div class="alignright"><a href="indexaa1e.html?cat=4">Newer Entries &raquo;</a></div>
+		</div>
+
+				<div class="post">
+				<h3 id="post-14"><a href="index0b69.html?p=14" rel="bookmark" title="Permanent Link to Zexall">Zexall</a></h3>
+				<small>Friday, September 5th, 2008</small>
+
+				<div class="entry">
+					<p>I havent had much time to work on my emulator over the past week. However I have just managed to get zexall running the first few instructions fine. It breaks when it encounters an opcode I havent implemented which is not suprising <img src='wp-includes/images/smilies/icon_smile.gif' alt=':)' class='wp-smiley' /> </p>
+<p>With zexall working hopefully it wont be long until I have a fully working z80 emulator.</p>
+<p>Heres a screenshot of my emulator running zexall in debug mode (hence slow fps). I have no idea why the first character of the ouput isnt working but that&#8217;ll just be a small bug in my vdp emulation which is far from finished.</p>
+<p><img src="../../../../www.codeslinger.co.uk/pages/projects/mastersystem/images/zexall.png" alt="Zexall" /></p>
+<p>CS</p>
+				</div>
+
+				<p class="postmetadata"> Posted in <a href="indexaa1e.html?cat=4" title="View all posts in Sega Master System" rel="category">Sega Master System</a> |   <a href="index0b69.html?p=14#respond" title="Comment on Zexall">No Comments &#187;</a></p>
+
+			</div>
+
+				<div class="post">
+				<h3 id="post-10"><a href="index64b4.html?p=10" rel="bookmark" title="Permanent Link to Master System VDP Update">Master System VDP Update</a></h3>
+				<small>Saturday, August 23rd, 2008</small>
+
+				<div class="entry">
+					<p>I&#8217;ve made a bit of progress on my master system in the last 24 hours. So far I&#8217;ve managed to get 2 VDP test roms running perfectly, a third test rom running but with glitches and the Z80 CPU Instruction Exerciser ROM running. So far the Z80 Instruction Exerciser ROM runs but every instruction check fails. This is not because all the instructions are incorrect (because if that was the case I&#8217;d never see any ROMS load), so I guess the problem is with the checking algorithm it uses. I must have implemented one of the opcodes incorrectly which does the checking, therefore everything appears to be incorrect. Hopefully soon I can upload some screenshots of either a game screen or the Z80 Instruction Exerciser passing some tests.</p>
+				</div>
+
+				<p class="postmetadata"> Posted in <a href="indexaa1e.html?cat=4" title="View all posts in Sega Master System" rel="category">Sega Master System</a> |   <a href="index64b4.html?p=10#respond" title="Comment on Master System VDP Update">No Comments &#187;</a></p>
+
+			</div>
+
+				<div class="post">
+				<h3 id="post-9"><a href="indexb5fb.html?p=9" rel="bookmark" title="Permanent Link to Starting the Master System">Starting the Master System</a></h3>
+				<small>Monday, August 18th, 2008</small>
+
+				<div class="entry">
+					<p>Over the past few days I&#8217;ve had a few hours spare to start reading about the sega master system. The CPU is a Z80 which is what the Gameboy CPU is similar to, so I have already implemented 50% of the instructions. I have found the website <a href="http://www.smspower.org/dev/docs/">SMS Power</a> very useful for the SMS documentation. Unlike the gameboy there is not one document which covers everything you need to emulate the SMS so I&#8217;m using about 7 different resources to learn from, which I quite like doing really as it feels less spoon fed this way.</p>
+<p>When I first started looking into emulating the Z80 I thought it would be easier than the Gameboy because of the fewer interupts and I found the gameboy quite quirky, however this is not the case. The other 50% of the Z80 cpu instructions I have to implement are more complicated than the 50% I&#8217;ve already implemented. Plus there are another 5 flags that need to be set correctly. The 0xFD and 0xDD opcodes make the cpu feel quite bloated aswell. The VDP seems much more complicated than the Gameboy and so do the way the interupts work. I&#8217;m still confident that I can finish this system in two months including sound but only if I have the time to do work on it, but it wont be as easy as I first thought.</p>
+<p>I have got a few test roms from that SMS Power site which I have emulated all the opcodes for, so now I just need to get the VDP showing something for them. Once I have emulated the VDP I should be able to run ZEXALL which is a Z80 test rom, which will be really usefull for eliminating cpu bugs.</p>
+<p>Fun fun fun</p>
+				</div>
+
+				<p class="postmetadata"> Posted in <a href="indexaa1e.html?cat=4" title="View all posts in Sega Master System" rel="category">Sega Master System</a> |   <a href="indexb5fb.html?p=9#respond" title="Comment on Starting the Master System">No Comments &#187;</a></p>
+
+			</div>
+
+		
+		<div class="navigation">
+			<div class="alignleft"></div>
+			<div class="alignright"><a href="indexaa1e.html?cat=4">Newer Entries &raquo;</a></div>
+		</div>
+
+	
+	</div>
+
+	<div id="sidebar">
+		<ul>
+						<li>
+				<form method="get" id="searchform" action="http://codeslinger.co.uk/pages/blog/wordpress/">
+<div><input type="text" value="" name="s" id="s" />
+<input type="submit" id="searchsubmit" value="Search" />
+</div>
+</form>
+			</li>
+
+			<!-- Author information is disabled per default. Uncomment and fill in your details if you want to use it.
+			<li><h2>Author</h2>
+			<p>A little something about you, the author. Nothing lengthy, just an overview.</p>
+			</li>
+			-->
+
+			 <li>
+
+						<p>You are currently browsing the archives for the Sega Master System category.</p>
+
+			
+			</li> 
+			
+			<li><h2>Archives</h2>
+				<ul>
+					<li><a href='indexd189.html?m=201005' title='May 2010'>May 2010</a></li>
+	<li><a href='indexc36d.html?m=200905' title='May 2009'>May 2009</a></li>
+	<li><a href='index17e8.html?m=200904' title='April 2009'>April 2009</a></li>
+	<li><a href='index10a5.html?m=200903' title='March 2009'>March 2009</a></li>
+	<li><a href='index8988.html?m=200902' title='February 2009'>February 2009</a></li>
+	<li><a href='index7866.html?m=200812' title='December 2008'>December 2008</a></li>
+	<li><a href='index55f6.html?m=200811' title='November 2008'>November 2008</a></li>
+	<li><a href='indexa7bc.html?m=200810' title='October 2008'>October 2008</a></li>
+	<li><a href='indexe77c.html?m=200809' title='September 2008'>September 2008</a></li>
+	<li><a href='indexcffc.html?m=200808' title='August 2008'>August 2008</a></li>
+	<li><a href='index0e62.html?m=200807' title='July 2008'>July 2008</a></li>
+				</ul>
+			</li>
+
+			<li class="categories"><h2>Categories</h2><ul>	<li class="cat-item cat-item-3"><a href="index81ea.html?cat=3" title="View all posts filed under Gameboy">Gameboy</a> (6)
+</li>
+	<li class="cat-item cat-item-4 current-cat"><a href="indexaa1e.html?cat=4" title="View all posts filed under Sega Master System">Sega Master System</a> (13)
+</li>
+	<li class="cat-item cat-item-1"><a href="indexb31a.html?cat=1" title="View all posts filed under Uncategorized">Uncategorized</a> (4)
+</li>
+	<li class="cat-item cat-item-5"><a href="indexb946.html?cat=5" title="View all posts filed under Zuko">Zuko</a> (1)
+</li>
+</ul></li>
+			
+					</ul>
+	</div>
+
+
+
+<hr />
+<div id="footer">
+<!-- If you'd like to support WordPress, having the "powered by" link somewhere on your blog is the best way; it's our only promotion or advertising. -->
+	<p>
+		Emulator Development is proudly powered by
+		<a href="http://wordpress.org/">WordPress</a>
+		<br /><a href="indexd784.html?feed=rss2">Entries (RSS)</a>
+		and <a href="indexa6da.html?feed=comments-rss2">Comments (RSS)</a>.
+		<!-- 20 queries. 0.489 seconds. -->
+	</p>
+</div>
+</div>
+
+<!-- Gorgeous design by Michael Heilemann - http://binarybonsai.com/kubrick/ -->
+
+		</body>
+
+<!-- Mirrored from codeslinger.co.uk/pages/blog/wordpress/?cat=4&paged=2 by HTTrack Website Copier/3.x [XR&CO'2010], Thu, 11 Aug 2011 17:35:05 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8"><!-- /Added by HTTrack -->
+</html>

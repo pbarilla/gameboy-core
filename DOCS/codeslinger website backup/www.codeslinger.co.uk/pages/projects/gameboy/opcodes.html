@@ -1,0 +1,528 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<!-- Mirrored from www.codeslinger.co.uk/pages/projects/gameboy/opcodes.html by HTTrack Website Copier/3.x [XR&CO'2010], Thu, 11 Aug 2011 17:34:19 GMT -->
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="description" content="_Emulation Programming_" />
+<meta name="keywords" content="_Emulation,Chip8,Gameboy,NES,SNES,Genesis,Master,System,Mega,Drive_" />
+<meta name="author" content="CodeSlinger /" />
+<link rel="stylesheet" type="text/css" href="../../../css.css" media="screen,projection" title="CodeSlinger (screen)" />
+<link rel="stylesheet" type="text/css" href="../../../print.css" media="print" />
+<title>codeslinger.co.uk</title>
+</head>
+
+<body>
+<div>
+<br><br>
+</div>
+
+<div id="container">
+<div id="logo">
+<h1><a href="../../../index-2.html">codeslinger.co.uk</a></h1>
+</div>
+
+<div id="navitabs">
+<h2 class="hide">Site menu:</h2>
+<a class="navitab" href="../../../index-3.html">Home</a><span class="hide"> | </span>
+<a class="navitab" href="../../basics.html">Basics</a><span class="hide"> | </span>
+<a class="navitab" href="../zuko.html">Zuko</a><span class="hide"> | </span>
+<a class="navitab" href="../megadrive.html">Mega Drive/Genesis</a><span class="hide"> | </span>
+<a class="navitab" href="../mastersystem.html">Master System</a><span class="hide"> | </span>
+<a class="activenavitab" href="../gameboy.html">Gameboy</a><span class="hide"> | </span>
+<a class="navitab" href="../chip8.html">Chip8</a><span class="hide"> | </span>
+<a class="navitab" href="../../blog/index.html">Blog</a><span class="hide"> | </span>
+</div>
+	
+<div id="desc">
+<h2>codeslinger.co.uk</h2>
+<p> Gameboy - Example Opcodes.</p>
+
+</div>
+
+<div id="main">
+
+<h3><b>ExecuteNextOpcode:</b></h3>
+<p>
+So far this tutorial has focussed on how the internals of the gameboy fit together and how to emulate each. I often mentioned how knowing how long each instruction takes to execute on the original
+hardware we can synchronize the graphics and timers. This information was acquired in the main update loop from the function called ExecuteNextOpcode, however I never gave an implementation to this function,
+mainly because it was to do with emulating the Z80 like processor, and I was leaving this to last. As I have discussed all other aspects of the gameboy I can now give the definition of this function.
+
+<p class = "code">
+
+int Emulator::ExecuteNextOpcode( )<br>
+{<br>
+   int res = 0 <br>
+   BYTE opcode = ReadMemory(m_ProgramCounter) ; <br>
+   m_ProgramCounter++ ;<br>
+   res = ExecuteOpcode(opcode) ; <br>
+   return res ;<br> 
+}
+
+</p>
+
+Well thats short and sweet, however now we have to implement the ExecuteOpcode function which is a big switch statement. There are approximately 300 opcodes for the gameboy cpu so to show the entire
+switch statement on this page would be ridiculous, so instead of showing all of them I shall just show the ones that I will give examples to on this page.
+
+<p class = "code">
+int Emulator::ExecuteOpcode(BYTE opcode)<br>
+{ <br>
+   switch(opcode)<br>
+   {<br>
+   case 0x06: <br>
+   CPU_8BIT_LOAD(m_RegisterBC.hi) ; <br>
+   return 8;<br><br>
+
+   case 0x80: <br>
+   CPU_8BIT_ADD(m_RegisterAF.hi, m_RegisterBC.hi,false,false) ; <br>
+   return 4;<br><br>
+
+   case 0x90: <br>
+   CPU_8BIT_SUB(m_RegisterAF.hi, m_RegisterBC.hi,false,false) ; <br>
+   return 4 ;<br><br>
+
+   case 0xAF: <br>
+   CPU_8BIT_XOR(m_RegisterAF.hi, m_RegisterAF.hi, false) ;<br>
+   return 4;<br><br>
+
+   case 0x20 : <br>
+   CPU_JUMP_IMMEDIATE( true, FLAG_Z, false ) ;<br>
+   return 8;<br><br>
+
+   case 0xCC : <br>
+   CPU_CALL( true, FLAG_Z, true) ;<br?
+   return 12;<br><br>
+
+   case 0xD0: <br>
+   CPU_RETURN( true, FLAG_C, false ) ; <br>
+   return 8;<br><br>
+
+   case 0xCB: <br>
+   return ExecuteExtendedOpcode( ) ;  <br><br>
+
+   default: <br>
+   assert(false); return 0 ;// unhandled opcode<br?
+   }<br>
+}
+
+</p>
+
+The opcode 0xCB is the extended opcode meaning that whenever we in encounter the 0xCB opcode we have to decode the next immediate byte in memory and treat that as the opcode. The opcodes 0xAB is different
+to 0xCB 0xAB. This means we can have more opcodes then the standard 0x0-0xFF. ExecuteExtendedOpcode function is identical layout to ExecuteOpcode except it deals with the extended opcodes like so:
+
+<p class="code">
+int Emulator::ExecuteExtendedOpcode( ) <br>
+{<br>
+   BYTE opcode = ReadMemory(m_ProgramCounter) ; <br>
+   m_ProgramCounter++; <br><br>
+
+   switch(opcode)<br>
+   { <br>
+   case 0xB : <br>
+   CPU_RRC(m_RegisterDE.lo) ;<br>
+   return 8; <br><br>
+
+   case 0x73 : <br>
+   CPU_TEST_BIT( m_RegisterDE.lo, 6 ) ;<br>
+   return 8;<br><br>
+
+   default: <br>
+   assert(false); return 0; // unhandled extended opcode<br>
+   }<br?
+}
+</p>
+
+Thats all there is to emulating the Z80 except of course actually implementing all the functions that are called from the switch statement :-).
+
+Remember that all the CPU instructions you have to implement can be found in the <a href="files/GB.pdf">Gameboy PDF</a> im hosting.
+
+
+
+</p>
+
+<h3><b>8-Bit Loads:</b></h3>
+<p>
+
+The 8-Bit Loads put one byte of immediate data from memory into one of the 8 registers. So if the function CPU_8IT_LOAD takes a reference of one of the registers as an argument like opcode 0x06 then it can
+be used for all 8 registers. Opcode 0x06 loads one byte of immediate data into register B. Implementation:
+
+<p class = "code">
+void Emulator::CPU_8BIT_LOAD( BYTE& reg )<br>
+{<br>
+   BYTE n = ReadMemory(m_ProgramCounter) ;<br>
+   m_ProgramCounter++ ;<br>
+   reg = n ;<br>
+}
+</p>
+
+This function can be used for all 8 registers, not just B.
+
+</p>
+
+<h3><b>8-Bit ADD:</b></h3>
+<p>
+
+This function adds one byte to one of the registes and sets flags. Like CPU_8BIT_LOAD if we pass a reference as a parameter then it can be used for all 8 registes not just register A as in the example (opcode 0x80). 
+This function takes a total of 4 arguments, these are:
+
+<p class = "block">
+
+Argument 1: The register reference where the ADD result will be placed <br>
+Argument 2: The byte to add to the register if it is not immediate data<br>
+Argument 3: Wheter what we want to add to the register is immediate data<br>
+Argument 4: Wheter we also want to add the carry flag<br>
+
+</p>
+
+There are two type of z80 8-bit add instructions. The first adds a byte to the register and the second one adds a byte plus the carry flag to the register (hence the fourth argument). This instruction is called ADC.<br><br>
+
+This is the conditions the flags get set under:
+
+<p class="block">
+FLAG_Z: If after the addition the result is 0<br>
+FLAG_N: Set to 0<br>
+FLAG_C: If the result will be greater than max byte (255)<br>
+FLAG_H: If there will be a carry from the lower nibble to the upper nibble
+</p>
+
+FLAG_C needs to check the result before the addition, otherwise how will you know if the result was greater than 255 if when it does go greater than 255 it wraps round back to 0?<br><br>
+
+This is the implementation of 8-Bit ADD
+
+<p class = "code">
+void Emulator::CPU_8BIT_ADD(BYTE& reg, BYTE toAdd, int cycles, bool useImmediate, bool addCarry)<br>
+{<br>
+   BYTE before = reg ;<br>
+   BYTE adding = 0 ;<br><br>
+
+   // are we adding immediate data or the second param?<br>
+   if (useImmediate)<br>
+   {<br>
+     BYTE n = ReadMemory(m_ProgramCounter) ;<br>
+      m_ProgramCounter++ ;<br>
+      adding = n ;<br>
+   }<br>
+   else<br>
+   {<br>
+     adding = toAdd ;<br>
+   }<br><br>
+
+   // are we also adding the carry flag?<br>
+   if (addCarry)<br>
+   {<br>
+     if (TestBit(m_RegisterAF.lo, FLAG_C))<br>
+       adding++ ;<br>
+   }<br><br>
+
+   reg+=adding ;<br><br>
+
+   // set the flags<br>
+   m_RegisterAF.lo = 0 ;<br><br>
+
+   if (reg == 0)<br>
+     m_RegisterAF.lo = BitSet(m_RegisterAF.lo, FLAG_Z) ;<br><br>
+
+   WORD htest = (before & 0xF) ;<br>
+   htest += (adding & 0xF) ;<br><br>
+
+   if (htest > 0xF)<br>
+     m_RegisterAF.lo = BitSet(m_RegisterAF.lo, FLAG_H) ;<br><br>
+
+   if ((before + adding) > 0xFF)<br>
+     m_RegisterAF.lo = BitSet(m_RegisterAF.lo, FLAG_C) ;<br>
+
+}
+</p>
+
+
+</p>
+
+<h3><b>8-Bit Sub:</b></h3>
+<p>
+
+This is pretty much identical to 8-Bit Add except its for subtractions. It still can use immediate data or the second argument and it can also minus the carry flag aswell. This is how the flags
+are affected:
+
+<p class="block">
+FLAG_Z: If after the subtraction the result is 0<br>
+FLAG_N: Set to 1<br>
+FLAG_C: If the result will be less than 0<br>
+FLAG_H: If there will be a carry from the lower upper nibble to the lower nibble
+</p>
+
+It is implemented like so:
+
+<p class ="code">
+void Emulator::CPU_8BIT_SUB(BYTE& reg, BYTE subtracting, int cycles, bool useImmediate, bool subCarry)<br>
+{<br>
+   BYTE before = reg ;<br>
+   BYTE toSubtract = 0 ;<br><br>
+
+   if (useImmediate)<br>
+   {<br>
+     BYTE n = ReadMemory(m_ProgramCounter) ;<br>
+     m_ProgramCounter++ ;<br>
+     toSubtract = n ;<br>
+   }<br>
+   else<br>
+   {<br>
+     toSubtract = subtracting ;<br>
+   }<br><br>
+
+   if (subCarry)<br>
+   {<br>
+     if (TestBit(m_RegisterAF.lo, FLAG_C))<br>
+       toSubtract++ ;<br>
+   }<br><br>
+
+   reg -= toSubtract ;<br><br>
+
+   m_RegisterAF.lo = 0 ;<br><br>
+
+   if (reg == 0)<br>
+     m_RegisterAF.lo = BitSet(m_RegisterAF.lo, FLAG_Z) ;<br><br>
+
+   m_RegisterAF.lo = BitSet(m_RegisterAF.lo, FLAG_N) ;<br><br>
+
+   // set if no borrow<br>
+   if (before < toSubtract)<br>
+     m_RegisterAF.lo = BitSet(m_RegisterAF.lo, FLAG_C) ;<br><br>
+
+   SIGNED_WORD htest = (before & 0xF) ;<br>
+   htest -= (toSubtract & 0xF) ;<br><br>
+
+   if (htest < 0)<br>
+     m_RegisterAF.lo = BitSet(m_RegisterAF.lo, FLAG_H) ;<br>
+
+}
+
+</p>
+
+</p>
+
+<h3><b>8-Bit XOR:</b></h3>
+<p>
+
+All the logical operators AND, OR and XOR work the same as ADD and SUB, except it doesnt care about the carry flag (so there is no fourth argument). The flags are set like so for XOR:
+
+<p class="block">
+
+FLAG_Z: If the result is 0<br>
+FLAG_N: Set to 0<br>
+FLAG_C: Set to 0<br>
+FLAG_H: Set to 0
+
+</p>
+
+Nice and easy. This is the implementation:
+
+<p class = "code">
+void Emulator::CPU_8BIT_XOR(BYTE& reg, BYTE toXOr, int cycles, bool useImmediate)<br>
+{<br>
+   BYTE myxor = 0 ;<br><br>
+
+   if (useImmediate)<br>
+   {<br>
+     BYTE n = ReadMemory(m_ProgramCounter) ;<br>
+     m_ProgramCounter++ ;<br>
+     myxor = n ;<br>
+   }<br>
+   else<br>
+   {<br>
+      myxor = toXOr ;<br>
+   }<br><br>
+
+   reg ^= myxor ;<br><br>
+
+   m_RegisterAF.lo = 0 ;<br><br>
+
+   if (reg == 0)<br>
+     m_RegisterAF.lo = BitSet(m_RegisterAF.lo, FLAG_Z) ;<br>
+}
+</p>
+
+</p>
+
+<h3><b>Jumps:</b></h3>
+<p>
+
+There are a fair few jump instructions but they all do the same thing. Jumps to a specific address, however most of the jump instruction only jumps if a certain condition is true. Some jump instructions
+jumps to the address pointed to by the next two bytes of the immediate data. Where the other jump instructions jumps to the current program counter + the next immediate data (called
+Jump Immediate). One
+jump instructions jumps to the address pointed to by register HL. This is the implementation of the JUMP_IMMEDIATE instruction:
+
+<p class="code">
+void Emulator::CPU_JUMP_IMMEDIATE(bool useCondition, int flag, bool condition)<br>
+{<br>
+   SIGNED_BYTE n = (SIGNED_BYTE)ReadMemory(m_ProgramCounter) ;<br><br>
+
+   if (!useCondition)<br>
+   {<br>
+     m_ProgramCounter += n;<br>
+   }<br>
+   else if (TestBit(m_RegisterAF.lo, flag) == condition)<br>
+   {<br>
+     m_ProgramCounter += n ;<br>
+   }<br><br>
+
+   m_ProgramCounter++ ;<br>
+}
+</p> 
+
+As you can see if we are using a jump condition (i.e. jump if the Z flag is set) then we jump to address of m_ProgramCounter+ReadMemory(m_ProgramCounter).
+
+</p>
+
+<h3><b>Calls:</b></h3>
+<p>
+The call instruction is the same as the Jump instruction which jumps to the address of the next two immediate data. However the difference is that a call is a subroutine and will eventually
+return to its current address, where as a jump doesn't. So in order to know where to return to we have to push the current program counter on to the stack.
+
+<p class = "code">
+void Emulator::CPU_CALL(bool useCondition, int flag, bool condition)<br>
+{<br>
+   WORD nn = ReadWord( ) ;<br>
+   m_ProgramCounter += 2;<br><br>
+
+   if (!useCondition)<br>
+   {<br>
+     PushWordOntoStack(m_ProgramCounter) ;<br>
+     m_ProgramCounter = nn ;<br>
+     return ;<br>
+   }<br><br>
+
+   if (TestBit(m_RegisterAF.lo, flag)==condition)<br>
+   {<br>
+     PushWordOntoStack(m_ProgramCounter) ;<br>
+     m_ProgramCounter = nn ;<br>
+   }<br>
+}
+</p>
+
+Remember this is the same as the other Jump instruction (not jump immediate) except that the jump instruction doesnt push anything onto the stack
+
+</p>
+
+<h3><b>Returns:</b></h3>
+<p>
+Now we've handled calls to subroutines we neeed to return from them. The way you return is you pop a word from the stack and assign it to the program counter (remember you pushed the program
+counter onto the stack with the call function). Once again we can put a condition on the return aswell.
+
+<p class="code">
+void Emulator::CPU_RETURN(bool useCondition, int flag, bool condition)<br>
+{<br>
+   if (!useCondition)<br>
+   {<br>
+     m_ProgramCounter = PopWordOffStack( ) ;<br>
+     return ;<br>
+   }<br><br>
+
+   if (TestBit(m_RegisterAF.lo, flag) == condition)<br>
+   {<br>
+     m_ProgramCounter = PopWordOffStack( ) ;<br>
+   }<br>
+}
+</p>
+
+
+</p>
+
+<h3><b>Extended: Rotate Right Through Carry:</b></h3>
+<p>
+
+This instruction rotates a regiser A right and sets the carry flag with the least significant bit before the rotation. A right rotation means everything gets shifted right one and the
+most significant bit gets set to what the least significant bit was before the rotation.  All the flags get set to 0 except the carry flag which as previously mentioned gets set
+to the least significant bit of reg a before the rotation
+
+<p class="code">
+void Emulator::CPU_RRC(BYTE& reg)<br>
+{<br>
+   bool isLSBSet = TestBit(reg, 0) ;<br><br>
+
+   m_RegisterAF.lo = 0 ;<br><br>
+
+   reg >>= 1;<br><br>
+
+   if (isLSBSet)<br>
+   {<br>
+     m_RegisterAF.lo = BitSet(m_RegisterAF.lo, FLAG_C) ;<br>
+     reg = BitSet(reg,7) ;<br>
+   }<br>
+
+   if (reg == 0)<br>
+     m_RegisterAF.lo = BitSet(m_RegisterAF.lo, FLAG_Z) ;<br>
+}
+</p>
+
+</p>
+
+<h3><b>Extended: TestBit:</b></h3>
+<p>
+This tests the bit of a byte and sets the approprite flags. The flags are set like so:
+
+<p class="block">
+FLAG Z: Set if the bit is 0<br>
+FLAG_N: Set to 0<br>
+FLAG_C: Unchanged<br>
+FLAG_H: Set to 1
+</p>
+
+This is the implemenation:
+
+<p class="code">
+void Emulator::CPU_TEST_BIT(BYTE reg, int bit, int cycles)<br>
+{<br>
+   if (TestBit(reg, bit))<br>
+     m_RegisterAF.lo = BitReset(m_RegisterAF.lo, FLAG_Z) ;<br>
+   else<br>
+     m_RegisterAF.lo = BitSet(m_RegisterAF.lo, FLAG_Z) ;<br><br>
+
+   m_RegisterAF.lo = BitReset(m_RegisterAF.lo, FLAG_N) ;<br>
+   m_RegisterAF.lo = BitSet(m_RegisterAF.lo, FLAG_H) ;<br>
+
+}
+</p>
+
+The important thing to know with the TEST_BIT instruction (and with the SET_BIT and RESET_BIT instructions). Is that the documentation states that extended opcode 0x40 tests bit 0 of register B.
+But doesnt give the opcodes for when bit 1 is needed to be tested or bit 2. Luckily all you have to do is add 0x8 to get hex value of the other opcodes. So to test bit 1 of register B it is 0x48. To
+test bit 2 of register B it is 0x50. This also works for the other registers, for example the documentation says that opcode 0x41 tests bit 0 of register C. From this we can also deduce that 0x49
+tests bit 1 of register C etc. You need to emulate all these instruction to test all 7 bits of all 8 registers. The same goes for emulating the SET_BIT and RESET_BIT functions.
+
+<br><br>
+
+</p>
+
+</div>
+
+<div id="sidebar">
+<h3>Gameboy Emulation:</h3>
+
+<p>
+<a class="sidelink" href="beginning.html">Getting Started</a><span class="hide"> | </span>
+<a class="sidelink" href="hardware.html">The Hardware</a><span class="hide"> | </span>
+<a class="sidelink" href="memory.html">Memory Control and Map</a><span class="hide"> | </span>
+<a class="sidelink" href="banking.html">ROM and RAM Banking</a><span class="hide"> | </span>
+<a class="sidelink" href="timers.html">The Timers</a><span class="hide"> | </span>
+<a class="sidelink" href="interupts.html">Interupts</a><span class="hide"> | </span>
+<a class="sidelink" href="lcd.html">LCD</a><span class="hide"> | </span>
+<a class="sidelink" href="dma.html">DMA Transfer</a><span class="hide"> | </span>
+<a class="sidelink" href="graphics.html">Graphic Emulation</a><span class="hide"> | </span>
+<a class="sidelink" href="joypad.html">Joypad Emulation</a><span class="hide"> | </span>
+<a class="sidelink" href="opcodes.html">Opcode Examples</a><span class="hide"> | </span>
+<a class="sidelink" href="finished.html">Finished Product</a><span class="hide"> | </span>
+
+</p>
+
+</div>
+    
+<div id="footer">
+Copyright © 2008 codeslinger.co.uk
+</div>
+
+</div>
+</body>
+
+<!-- Mirrored from www.codeslinger.co.uk/pages/projects/gameboy/opcodes.html by HTTrack Website Copier/3.x [XR&CO'2010], Thu, 11 Aug 2011 17:34:19 GMT -->
+</html>
+
+

@@ -1,0 +1,92 @@
+//////////////////////////////////////////////////////////////////////////////////////
+
+BYTE CPUEmu::GetClockFreq( )
+{
+	return m_GameMemory[TAC] & 0x3 ;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////
+
+void CPUEmu::WriteByte(WORD address, BYTE data)
+{
+
+	if (TAC == address)
+
+	{
+
+		BYTE currentfreq = GetClockFreq() ;
+
+		m_GameMemory[TAC] = data ;
+
+		BYTE newfreq = GetClockFreq();
+
+		if (currentfreq != newfreq)
+
+		{
+
+			SetClockFreq();
+
+		}
+
+	}
+
+}
+
+//////////////////////////////////////////////////////////////////////////////////////
+
+void CPUEmu::SetClockFreq()
+{
+	BYTE freq = GetClockFreq( ) ;
+	switch (freq)
+	{
+		case 0: m_TimerTracer = 1024 ; break ;
+		case 1: m_TimerTracer = 16 ; break ;
+		case 2: m_TimerTracer = 64 ; break ;
+		case 3: m_TimerTracer = 256 ; break ;
+	}
+
+}
+
+//////////////////////////////////////////////////////////////////////////////////////
+
+void CPUEmu::Update( )
+{
+	const int TARGETCYCLES = CLOCKSPEED/FPS ;
+	
+	m_CyclesThisUpdate = 0;
+	while (m_CyclesThisUpdate < TARGETCYCLES)
+	{
+		int cycles = ExecuteNextOpcode( ) ; // returns num cycles the opcode takes
+		m_CyclesThisUpdate += cycles ;
+		DoTimers(cycles) ;
+	}
+}
+
+//////////////////////////////////////////////////////////////////////////////////////
+
+void CPUEmu::DoTimers( int cycles )
+{
+	if (IsClockEnabled())
+	{
+		m_TimerTracer -= cycles ;
+
+		if (m_TimerTracer <= 0)
+		{
+			// reset m_TimerTracer to the correct value
+			SetClockFreq( ) ;
+
+			// timer about to overflow
+			if (m_GameMemory[TIMA] == 255)
+			{
+				m_GameMemory[TIMA] = m_GameMemory[TMA] ;
+				RequestInterupt(2) ;
+			}
+			else
+			{
+				m_GameMemory[TIMA]++ ;
+			}
+		}
+	}
+}
+
+//////////////////////////////////////////////////////////////////////////////////////

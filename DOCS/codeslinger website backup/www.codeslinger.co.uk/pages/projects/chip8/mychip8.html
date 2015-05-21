@@ -1,0 +1,121 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<!-- Mirrored from www.codeslinger.co.uk/pages/projects/chip8/mychip8.html by HTTrack Website Copier/3.x [XR&CO'2010], Thu, 11 Aug 2011 17:34:21 GMT -->
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="description" content="_Emulation Programming_" />
+<meta name="keywords" content="_Emulation,Chip8,Gameboy,NES,SNES,Genesis,Master,System,Mega,Drive_" />
+<meta name="author" content="CodeSlinger /" />
+<link rel="stylesheet" type="text/css" href="../../../css.css" media="screen,projection" title="CodeSlinger (screen)" />
+<link rel="stylesheet" type="text/css" href="../../../print.css" media="print" />
+<title>codeslinger.co.uk</title>
+</head>
+
+<body>
+<div>
+<br><br>
+</div>
+
+<div id="container">
+<div id="logo">
+<h1><a href="../../../index-2.html">codeslinger.co.uk</a></h1>
+</div>
+
+<div id="navitabs">
+<h2 class="hide">Site menu:</h2>
+<a class="navitab" href="../../../index-3.html">Home</a><span class="hide"> | </span>
+<a class="navitab" href="../../basics.html">Basics</a><span class="hide"> | </span>
+<a class="navitab" href="../zuko.html">Zuko</a><span class="hide"> | </span>
+<a class="navitab" href="../megadrive.html">Mega Drive/Genesis</a><span class="hide"> | </span>
+<a class="navitab" href="../mastersystem.html">Master System</a><span class="hide"> | </span>
+<a class="navitab" href="../gameboy.html">Gameboy</a><span class="hide"> | </span>
+<a class="activenavitab" href="../chip8.html">Chip8</a><span class="hide"> | </span>
+<a class="navitab" href="../../blog/index.html">Blog</a><span class="hide"> | </span>
+</div>
+	
+<div id="desc">
+<h2>codeslinger.co.uk</h2>
+<p> My Chip8 emulator.</p>
+
+</div>
+
+<div id="main">
+<h3><b>About my emulator:</b> </h3>
+<p>
+
+When I originally wrote my chip8 emualator I used my gaming libraries I had already written for the graphic and sound emulation. My libraries are not open source which is why I recently decided to rewrite a chip8 emulator which didnt rely on my gaming libraries so I could release the sourcecode on this website. The only disadvantage with this is that as I dont know OpenAL there is no sound emulation for this release. However I have included an empty function called PlayBeep() which is where the code to play a beep sound should go, so it should still give you knowledge of how the sound timing works in the chip8. You just wont be able to hear anything.
+
+
+</p>
+
+<h3><b>Read Me Before Downloading:</b> </h3>
+<p>
+
+My emulator will compile under both Windows and CodeBlocks under Linux. What to remember when running under windows is make sure SDL.dll is in the same directory as the executable and depending on how you're running the exectuable you will need to either put game.ini and the ROMS directory in the same folder as the executable or in its parent folder. Make sure you edit game.ini to get the timing correct and to which Chip8 rom file to load.
+
+<p class="block">
+
+I am not releasing any chip8 rom files with the source code as this is highly illegal. If you want the ROMS you will have to find them yourself and you can only legally download them if you own the original chip8 system!
+
+</p>
+
+Remember this emulator was designed to aid those struggling to get started with emulator programming. I have purposefully left out the nicities like state saving and GUI programming to keep the source code clean and clear. Enjoy
+
+</p>
+
+<h3><b>Downloads:</b> </h3>
+<p>
+
+You can download the latest release of my Chip8 emulator source from <a href="files/Chip8Src.zip"> here</a>
+
+</p>
+
+<h3><b>Screenshots:</b> </h3>
+<p>
+
+Opening screen to space invaders:<br>
+<img src = "images/invadersintro.png"></img> <br><br>
+
+Space Invaders:<br>
+<img src = "images/invaders.png"></img> <br><br>
+
+Tetris:<br>
+<img src = "images/tetris.png"></img> <br><br>
+
+Wipeoff:<br>
+<img src = "images/wipeoff.png"></img> <br><br>
+
+TicTacToe:<br>
+<img src = "images/tictac.png"></img> <br><br>
+
+</p>
+ 
+
+</div>
+
+<div id="sidebar">
+<h3>Chip8 Emulation:</h3>
+
+<p>
+<a class="sidelink" href="../chip8.html">Getting Started</a><span class="hide"> | </span>
+<a class="sidelink" href="hardware.html">Step 1: The Hardware</a><span class="hide"> | </span>
+<a class="sidelink" href="fetchdecode.html">Step 2: The fetch decode loop</a><span class="hide"> | </span>
+<a class="sidelink" href="examples.html">Step 3: Example opcode emulation</a><span class="hide"> | </span>
+<a class="sidelink" href="primitive.html">Step 4: Timers, Sound and Input</a><span class="hide"> | </span>
+<a class="sidelink" href="mychip8.html">My Finished project</a><span class="hide"> | </span>
+</p>
+
+</div>
+    
+<div id="footer">
+Copyright © 2008 codeslinger.co.uk
+</div>
+
+</div>
+</body>
+
+<!-- Mirrored from www.codeslinger.co.uk/pages/projects/chip8/mychip8.html by HTTrack Website Copier/3.x [XR&CO'2010], Thu, 11 Aug 2011 17:34:21 GMT -->
+</html>
+
+

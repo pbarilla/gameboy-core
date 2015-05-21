@@ -1,0 +1,252 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<!-- Mirrored from www.codeslinger.co.uk/pages/projects/gameboy/interupts.html by HTTrack Website Copier/3.x [XR&CO'2010], Thu, 11 Aug 2011 17:34:17 GMT -->
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="description" content="_Emulation Programming_" />
+<meta name="keywords" content="_Emulation,Chip8,Gameboy,NES,SNES,Genesis,Master,System,Mega,Drive_" />
+<meta name="author" content="CodeSlinger /" />
+<link rel="stylesheet" type="text/css" href="../../../css.css" media="screen,projection" title="CodeSlinger (screen)" />
+<link rel="stylesheet" type="text/css" href="../../../print.css" media="print" />
+<title>codeslinger.co.uk</title>
+</head>
+
+<body>
+<div>
+<br><br>
+</div>
+
+<div id="container">
+<div id="logo">
+<h1><a href="../../../index-2.html">codeslinger.co.uk</a></h1>
+</div>
+
+<div id="navitabs">
+<h2 class="hide">Site menu:</h2>
+<a class="navitab" href="../../../index-3.html">Home</a><span class="hide"> | </span>
+<a class="navitab" href="../../basics.html">Basics</a><span class="hide"> | </span>
+<a class="navitab" href="../zuko.html">Zuko</a><span class="hide"> | </span>
+<a class="navitab" href="../megadrive.html">Mega Drive/Genesis</a><span class="hide"> | </span>
+<a class="navitab" href="../mastersystem.html">Master System</a><span class="hide"> | </span>
+<a class="activenavitab" href="../gameboy.html">Gameboy</a><span class="hide"> | </span>
+<a class="navitab" href="../chip8.html">Chip8</a><span class="hide"> | </span>
+<a class="navitab" href="../../blog/index.html">Blog</a><span class="hide"> | </span>
+</div>
+	
+<div id="desc">
+<h2>codeslinger.co.uk</h2>
+<p> Gameboy - Interupts.</p>
+
+</div>
+
+<div id="main">
+
+<h3><b>Interupts:</b></h3>
+<p>
+
+As the chip8 system didnt have any interupts I'll explain what they are and what their purpose is. An interupt is usually a hardware signal which tells the CPU that something special has happened. The CPU will check its settings
+to see if it can respond to that interupt. The way the CPU responds to the interupt is by saving its current program counter onto the stack and then jumping to the interupt service routine address for the appropriate interupt.
+It will then carry on servicing this interupts routine until it has finished where it will then reload the old program counter and carry on executing the code from where it was before it was interupted. Hence the name interupt.<br><br>
+
+There are two special registers to do with the state of interupt handling in the gameboy. The first is the Interupt Enabled register (aka IE) located at memory addres 0xFFFF. This is written to by the game to enable and disable
+specific interupts. For example some event may happen that would trigger an interupt like the <a href="timers.html">timer</a> overflows, but this interupt would only get serviced if its corresponding bit is enabled in the
+Interupt Enabled Register (aka IE). If it is enabled then the interupt would be serviced but if it is not enabled the interupt would sit pending until it becomes enabled or the game resets its request. The second interupt
+register is the Interupt Request Register (aka IF) located at memory address 0xFF0F. Using the timer interupt as an example again, whenever the timer overflows it requests its interupt by setting its corresponding bit in the
+Interupt Request Register where it will stay set until servicing of the interupt begins or the game resets it. <br><br>The final point you need to know about interupt handling is the master interupt enabled switch. This is not part
+of game memory and is just a bool that the game sets on and off. When this bool is set to false no interupts will get serviced. Below is the criteria needed to handle an interupt:
+
+<p class = "block">
+1. When an event occurs that needs to trigger its interupt it must make an interupt request by setting its corresponding
+bit in the Interupt Request Register (0xFF0F).<br><br>
+
+2. An interupt can only be serviced if the Interupt Master Enable switch is set to true<br><br>
+
+3. If the above two conditions are true and their is no other interupt with a higher priority awaiting to be serviced then it checks
+the Interupt Enabled Register(0xFFFF) to see if its corresponding interupt bit is set to 1 to allow servicing of this particular interupt.
+</p>
+
+Step 1 gets set to true and false by the EI and DI cpu instructions respectively. If either step 2 or 3 is false then the interupt continues to wait until both 2 and 3 are true and the game hasnt turned the interupt request off
+by resetting its corresponding interupt bit the Interupt Request Register(0xFF0F). 
+
+</p>
+
+<h3><b>Gameboy Interupts:</b> </h3>
+<p>
+
+I have mentioned a few times that an interupt has its corresponding bit in the Interupt Enabled Register and Interupt Request Register. I have also mentioned
+that there are 4 Gameboy interupts we will be emulating. Below is the list of interupts and their corresponding bit in the interupt request register and interupt enabled register.
+
+<p class = "block">
+
+Bit 0: V-Blank Interupt<br>
+Bit 1: LCD Interupt<br>
+Bit 2: Timer Interupt<br>
+Bit 4: Joypad Interupt
+
+</p>
+
+This is also the priority listing of the interupts. The lower the bit the higher priority that interupt has, so V-Blank has the highest priority meaning
+if this interupt and another interupt are both requested in the Interupt Request Register then V-Blank will be serviced first. Now for an explanation of the interupts:
+<br><br>
+
+<strong>V-BLANK:</strong> The gameboy draws the display a scanline at a time. There are 144 scanlines on the display and when it has drawn the last one
+it starts again from the beginning. The time it takes to stop drawing scanline 144 and starting again at scanline 0 is the Vertical Blank period and this is when
+it requests the v-blank interupt. This is the most important interupt to emulate correctly because during V-Blank the game can read from memory that was previously
+restricted, mainly video memory. As stated previously the gameboy has a vertical refresh rate of 60 frames per second meaning that if Step 2 and Step 3 of the above
+steps is always true then there should be 60 V-Blank interupts a second. You will want to monitor this to make sure you are accurately emulating V-Blank.<br><br>
+
+<strong>LCD:</strong> There are many reasons why the LCD would request an interupt and these will be looked at in more detail in the next chapter called <a href="lcd.html">LCD</a>.
+The main info you need to know about the LCD interupt is it lets the game know what state the LCD is in because depending what state its in certain memory regions become restricted.
+The game can also set up a conincidence variable which means "let me know when you're active scanline is X". One of the things that stumped me with the LCD interupt
+is that it can request an LCD interupt whenever V-Blank happens. I didnt understand why there were two v-blank interupts, the main one which was discussed above and the one nested
+into the LCD interupt. What you need to remember is that during V-Blank if the game is allowing it there will be two V-Blank interupts requested. The first is the main V-Blank interupt
+and the second is the LCD interupt. However the first vblank interupt will have the higher priority.<br><br>
+
+<strong>TIMER:</strong> This interupt has been discussed previously in the <a href="timers.html">timers</a> section. Basically the gameboy timer counts up at a dynamic frequency
+and when it gets to value 255 and is about to overflow it lets the game know by requesting the timer interupt.<br><br>
+
+<strong>JOYPAD:</strong> The joypad will be discussed later on in the chapter <a href="joypad.html">Joypad</a>. This interupt is requested whenever one of the buttons goes from the unpressed
+state to the pressed state.
+
+</p>
+
+<h3><b>Requesting an Interupt:</b> </h3>
+<p>
+
+Throughout the gameboy part of this site you will see me use the function RequestInterupt. I call this whenever an event happens that needs to request an interupt and I pass
+it the interupt identifier bit (see table above) of the interupt I wish to request. This is how the implementation of this function looks:
+
+<p class = "code">
+void Emulator::RequestInterupt(int id)<br>
+{<br>
+   BYTE req = ReadMemory(0xFF0F) ; <br>
+   req = BitSet(req,id) ;<br>
+   WriteMemory(0xFF0F,id) ; <br>
+}
+</p>
+
+</p>
+ 
+<h3><b>Checking the Interupts:</b> </h3>
+<p>
+
+Now we know under what circumstances and interupt is requested we must also know how to handle it. If you look back to the <a href="beginning.html">Getting Started</a> chapter you will
+see the main emulator update loop. Notice how after ever opcode there is a function called DoInterupts? This function works by firstly checking if the master interupt switch is set
+to true. If it is then it checks to see if there are any pending interupts in the Interupt Request Flag. If there is then it checks all the interupts in their priority order to see
+if it being requested. If it is being requested it checks to see if this particular interupt is enabled in the Interupt Enabled register and if so it services it, if not it carries on checking
+the lower priority interupts.
+
+<p class="code">
+
+void Emulator::DoInterupts( )<br>
+{<br>
+   if (m_InteruptMaster == true)<br>
+   {<br>
+     BYTE req = ReadMemory(0xFF0F) ;<br>
+     BYTE enabled = ReadMemory(0xFFFF) ; <br>
+     if (req > 0)<br>
+     {<br>
+       for (int i = 0 ; i < 5; i++) <br>
+       { <br>
+         if (TestBit(req,i) == true)<br>
+         {<br>
+           if (TestBit(enabled,i))<br>
+             ServiceInterupt(i) ; <br>
+         }<br>
+       }<br>
+     } <br>
+   } <br>
+}
+
+</p>
+
+</p>
+
+<h3><b>Servicing the Interupts:</b> </h3>
+<p>
+
+Now we have detected that an interupt is to be serviced what happens then? Firstly the master interupt enabled switch gets set to false and its
+corresponding bit in the Interupt Request Register is now unset. Each interupt has a specific interupt service routine in game memory which the program
+counter gets set to and continues execution from there. When the interupt has finished servicing the program counter gets restored to where it currently
+was and game exection continues.  The following is the location of the Interupt Service Routine for each of the 4 interupts.
+
+<p class = "block">
+
+V-Blank: 0x40<br>
+LCD: 0x48<br>
+TIMER: 0x50<br>
+JOYPAD: 0x60
+</p>
+
+With this new knowledge we can write the ServiceInterupt function like so:
+
+<p class = "code">
+
+void Emulator::ServiceInterupt(int interupt)<br>
+{<br>
+   m_InteruptMaster = false <br>
+   BYTE req = ReadMemory(0xFF0F) ;<br>
+   req = BitReset(req,interupt) ; <br>
+   WriteMemory(0xFF0F,req) ;<br><br>
+
+   /// we must save the current execution address by pushing it onto the stack<br>
+   PushWordOntoStack(m_ProgramCounter); <br><br>
+
+   switch (interupt)<br>
+   {<br>
+     case 0: m_ProgramCounter = 0x40 ; break ; <br>
+     case 1: m_ProgramCounter = 0x48 ; break ; <br>
+     case 2: m_ProgramCounter = 0x50 ; break ; <br>
+     case 4: m_ProgramCounter = 0x60 ; break ; <br>
+   }<br>
+}
+
+</p>
+
+<h3><b>Nested Interupts:</b> </h3>
+<p>
+
+I put this section in here because it is important to know about but it is not something you need to emulate. It is possible that
+during the servicing of one of the interupts that the interupt re-enables the master interupt switch. By doing this the current interupt
+can get interupted itself by another interupt and will carry on finishing its own interupt when the new interupt finishes servicing. If you
+have emulated your interupts the same way I have then this functionality will automatically work but it is useful to know incase you look
+in your debug logs and see it is servicing one interupt before it finishes servicing another. 
+
+<br><br>
+</p>
+
+</div>
+
+<div id="sidebar">
+<h3>Gameboy Emulation:</h3>
+
+<p>
+<a class="sidelink" href="beginning.html">Getting Started</a><span class="hide"> | </span>
+<a class="sidelink" href="hardware.html">The Hardware</a><span class="hide"> | </span>
+<a class="sidelink" href="memory.html">Memory Control and Map</a><span class="hide"> | </span>
+<a class="sidelink" href="banking.html">ROM and RAM Banking</a><span class="hide"> | </span>
+<a class="sidelink" href="timers.html">The Timers</a><span class="hide"> | </span>
+<a class="sidelink" href="interupts.html">Interupts</a><span class="hide"> | </span>
+<a class="sidelink" href="lcd.html">LCD</a><span class="hide"> | </span>
+<a class="sidelink" href="dma.html">DMA Transfer</a><span class="hide"> | </span>
+<a class="sidelink" href="graphics.html">Graphic Emulation</a><span class="hide"> | </span>
+<a class="sidelink" href="joypad.html">Joypad Emulation</a><span class="hide"> | </span>
+<a class="sidelink" href="opcodes.html">Opcode Examples</a><span class="hide"> | </span>
+<a class="sidelink" href="finished.html">Finished Product</a><span class="hide"> | </span>
+
+</p>
+
+</div>
+    
+<div id="footer">
+Copyright © 2008 codeslinger.co.uk
+</div>
+
+</div>
+</body>
+
+<!-- Mirrored from www.codeslinger.co.uk/pages/projects/gameboy/interupts.html by HTTrack Website Copier/3.x [XR&CO'2010], Thu, 11 Aug 2011 17:34:17 GMT -->
+</html>
+
+
