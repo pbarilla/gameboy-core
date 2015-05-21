@@ -1,4 +1,7 @@
 #include "gamebae_helpers.h"
+#include "gamebae.h"
+
+BYTE cartMemory[0x200000];
 
 int main(int argc, char *argv[]) {
     /*
@@ -18,7 +21,10 @@ int main(int argc, char *argv[]) {
         int isDis = stringMatches("-dis", argv[1]);
 
         if (isRom == 1)  {
-            printf("isRom\n");
+            printf("Loading Cartridge...\n");
+            loadCartridgeWithFilename(argv[2]);
+            printf("Load Complete...\n");
+
 
         } else if (isHelp == 1) {
             printf("isHelp\n");
@@ -28,10 +34,21 @@ int main(int argc, char *argv[]) {
 
         } else if (isDis == 1) {
             printf("isDis\n");
-            
+
         } else {
             printf("Unknown Argument\n");
         }
 	}
+    return 0;
+}
+
+int loadCartridgeWithFilename(char filename) {
+    memset (cartMemory, 0, sizeof(cartMemory));
+
+    FILE *fileopener;
+    fileopener = fopen(filename, "rb");
+    fread(cartMemory, 1, 0x200000, fileopener);
+    fclose(fileopener);
+
     return 0;
 }
