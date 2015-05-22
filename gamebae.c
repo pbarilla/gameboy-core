@@ -1,4 +1,3 @@
-#include "gamebae_helpers.h"
 #include "gamebae.h"
 
 BYTE cartMemory[0x200000];
@@ -21,20 +20,14 @@ int main(int argc, char *argv[]) {
         int isDis = stringMatches("-dis", argv[1]);
 
         if (isRom == 1)  {
-            printf("Loading Cartridge...\n");
             loadCartridgeWithFilename(argv[2]);
-            printf("Load Complete...\n");
-
-
         } else if (isHelp == 1) {
-            printf("isHelp\n");
-
+            printf("TODO: make help page lol\n");
         } else if (isTest == 1) {
-            printf("isTest\n");
-
+            printf("This mode will prove all opcodes are implimented.\n");
         } else if (isDis == 1) {
-            printf("isDis\n");
-
+            printf("This mode just spits out a disassembly of a ROM to a
+            textfile.\nIf no file is specified, it will give it a name.\n");
         } else {
             printf("Unknown Argument\n");
         }
@@ -42,11 +35,13 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
-int loadCartridgeWithFilename(char filename) {
+int loadCartridgeWithFilename(char *filename) {
     memset (cartMemory, 0, sizeof(cartMemory));
 
     FILE *fileopener;
-    fileopener = fopen(filename, "rb");
+    const char *filenameConst = filename;
+
+    fileopener = fopen(filenameConst, "rb");
     fread(cartMemory, 1, 0x200000, fileopener);
     fclose(fileopener);
 
