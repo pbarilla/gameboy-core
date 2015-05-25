@@ -1,6 +1,29 @@
 #include "gamebae.h"
 
+// Cartridge Memory. The largest cart will have a max size of 0x200000
 BYTE cartMemory[0x200000];
+
+// ROM Memory. I know, the M in ROM stands for Memory rofl
+BYTE romMemory[0x10000];
+
+// Registers Definition. Each register pair represents 2 registers, lo and hi.
+union Register {
+    WORD reg;
+    struct {
+        BYTE lo;
+        BYTE hi;
+    };
+};
+
+// Registers
+union Register registerAF;
+union Register registerBC;
+union Register registerDE;
+union Register registerHL;
+
+// Program Counter and Stack Pointer
+WORD programCounter;
+union Register stackPointer;
 
 int main(int argc, char *argv[]) {
     /*
@@ -26,8 +49,7 @@ int main(int argc, char *argv[]) {
         } else if (isTest == 1) {
             printf("This mode will prove all opcodes are implimented.\n");
         } else if (isDis == 1) {
-            printf("This mode just spits out a disassembly of a ROM to a
-            textfile.\nIf no file is specified, it will give it a name.\n");
+            printf("This mode just spits out disassembly");
         } else {
             printf("Unknown Argument\n");
         }
@@ -45,5 +67,47 @@ int loadCartridgeWithFilename(char *filename) {
     fread(cartMemory, 1, 0x200000, fileopener);
     fclose(fileopener);
 
+    return 0;
+}
+
+int initializeMemory() {
+    programCounter = 0x100;
+    stackPointer.reg = 0xFFFE;
+    registerAF.reg = 0x01B0;
+    registerBC.reg = 0x0013;
+    registerDE.reg = 0x00D8;
+    registerHL.reg = 0x014D;
+    romMemory[0xFF05] = 0x00;
+    romMemory[0xFF06] = 0x00;
+    romMemory[0xFF07] = 0x00;
+    romMemory[0xFF10] = 0x80;
+    romMemory[0xFF11] = 0xBF;
+    romMemory[0xFF12] = 0xF3;
+    romMemory[0xFF14] = 0xBF;
+    romMemory[0xFF16] = 0x3F;
+    romMemory[0xFF17] = 0x00;
+    romMemory[0xFF19] = 0xBF;
+    romMemory[0xFF1A] = 0x7F;
+    romMemory[0xFF1B] = 0xFF;
+    romMemory[0xFF1C] = 0x9F;
+    romMemory[0xFF1E] = 0xBF;
+    romMemory[0xFF20] = 0xFF;
+    romMemory[0xFF21] = 0x00;
+    romMemory[0xFF22] = 0x00;
+    romMemory[0xFF23] = 0xBF;
+    romMemory[0xFF24] = 0x77;
+    romMemory[0xFF25] = 0xF3;
+    romMemory[0xFF26] = 0xF1;
+    romMemory[0xFF40] = 0x91;
+    romMemory[0xFF42] = 0x00;
+    romMemory[0xFF43] = 0x00;
+    romMemory[0xFF45] = 0x00;
+    romMemory[0xFF47] = 0xFC;
+    romMemory[0xFF48] = 0xFF;
+    romMemory[0xFF49] = 0xFF;
+    romMemory[0xFF4A] = 0x00;
+    romMemory[0xFF4B] = 0x00;
+    romMemory[0xFFFF] = 0x00;
+    
     return 0;
 }
