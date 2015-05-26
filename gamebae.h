@@ -2,3 +2,5 @@
 
 int loadCartridgeWithFilename(char *filename);
 int initializeMemory();
+int updateEmulator();
+int fetchDecodeExecute();

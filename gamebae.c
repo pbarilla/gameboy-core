@@ -44,6 +44,8 @@ int main(int argc, char *argv[]) {
 
         if (isRom == 1)  {
             loadCartridgeWithFilename(argv[2]);
+            initializeMemory();
+            updateEmulator();
         } else if (isHelp == 1) {
             printf("TODO: make help page lol\n");
         } else if (isTest == 1) {
@@ -56,6 +58,87 @@ int main(int argc, char *argv[]) {
 	}
     return 0;
 }
+
+
+// This should be called for every frame, so 60 times a second.
+// the currentCycles < MAXCYCLES will make sure the emulator doesnt run too fast
+int updateEmulator() {
+    const int MAXCYCLES = 65535;
+    int currentCycles = 0;
+
+    while (currentCycles < MAXCYCLES) {
+        // fetch, decode, execute
+        int cycles = fetchDecodeExecute();
+        currentCycles += cycles;
+
+        // update timing
+        // update graphics
+        // check for interrupts
+    }
+    // render screen
+    return 0;
+}
+
+int fetchDecodeExecute() {
+    BYTE opcode = cartMemory[programCounter];
+    int cycles = 0;
+    switch (opcode) {
+        case 0x00: { // NOP
+            cycles = 4;
+            printf("NOP\n");
+            programCounter++;
+            break;
+        }
+        // 8-bit loads
+        // LD nn,n
+        case 0x06: { // LD B,n
+            cycles = 8;
+            printf("LD B,n\n");
+            programCounter++;
+            break;
+        }
+        case 0x0E: { // LD C,n
+            cycles = 8;
+            printf("LD C,n\n");
+            programCounter++;
+            break;
+        }
+        case 0x16: { // LD D,n
+            cycles = 8;
+            printf("LD D,n\n");
+            programCounter++;
+            break;
+        }
+        case 0x1E: { // LD E,n
+            cycles = 8;
+            printf("LD E,n\n");
+            programCounter++;
+            break;
+        }
+        case 0x26: { // LD H,n
+            cycles = 8;
+            printf("LD H,n\n");
+            programCounter++;
+            break;
+        }
+        case 0x2E: { // LD L,n
+            cycles = 8;
+            printf("LD L,n\n");
+            programCounter++;
+            break;
+        }
+        default: { // Not implimented yet
+            cycles = 4;
+            printf("?\n");
+            programCounter++;
+
+            break;
+        }
+    }
+
+    return cycles;
+}
+
 
 int loadCartridgeWithFilename(char *filename) {
     memset (cartMemory, 0, sizeof(cartMemory));
@@ -108,6 +191,6 @@ int initializeMemory() {
     romMemory[0xFF4A] = 0x00;
     romMemory[0xFF4B] = 0x00;
     romMemory[0xFFFF] = 0x00;
-    
+
     return 0;
 }
