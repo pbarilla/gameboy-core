@@ -127,6 +127,44 @@ int fetchDecodeExecute() {
             programCounter++;
             break;
         }
+        // LD r1, r2 (page 66)
+        // "hahaha fuck you" - GB Spec Writers
+        case 0x7F: {
+            cycles = 4;
+            printf("LD A,A\n", );
+            programCounter++;
+            break;
+        }
+        case 0x78: {
+            cycles = 4;
+            printf("LD A,B\n", );
+            programCounter++;
+            break;
+        }
+        case 0x79: {
+            cycles = 4;
+            printf("LD A,C\n", );
+            programCounter++;
+            break;
+        }
+        case 0x7A: {
+            cycles = 4;
+            printf("LD A,D\n", );
+            programCounter++;
+            break;
+        }
+        case 0x7B: {
+            cycles = 4;
+            printf("LD A,E\n", );
+            programCounter++;
+            break;
+        }
+        case 0x7C: {
+            cycles = 4;
+            printf("LD A,H\n", );
+            programCounter++;
+            break;
+        }
         default: { // Not implimented yet
             cycles = 4;
             printf("?\n");
