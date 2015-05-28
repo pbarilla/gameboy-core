@@ -504,6 +504,724 @@ int fetchDecodeExecute() {
             break;
         }
         // up to LD n,A page 69
+        case 0x47: { // LD B,A
+            cycles = 4;
+            printf("LD B,A\n");
+            programCounter++;
+            break;
+        }
+        case 0x4F: { // LD C,A
+            cycles = 4;
+            printf("LD C,A\n");
+            programCounter++;
+            break;
+        }
+        case 0x57: { // LD D,A
+            cycles = 4;
+            printf("LD D,A\n");
+            programCounter++;
+            break;
+        }
+        case 0x5F: { // LD E,A
+            cycles = 4;
+            printf("LD E,A\n");
+            programCounter++;
+            break;
+        }
+        case 0x67: { // LD H,A
+            cycles = 4;
+            printf("LD H,A\n");
+            programCounter++;
+            break;
+        }
+        case 0x6F: { // LD H,A
+            cycles = 4;
+            printf("LD L,A\n");
+            programCounter++;
+            break;
+        }
+        case 0x02: { // LD (BC),A
+            cycles = 8;
+            printf("LD (BC),A\n");
+            programCounter++;
+            break;
+        }
+        case 0x12: { // LD (DE),A
+            cycles = 8;
+            printf("LD (DE),A\n");
+            programCounter++;
+            break;
+        }
+        case 0x77: { // LD (HL),A
+            cycles = 8;
+            printf("LD (HL),A\n");
+            programCounter++;
+            break;
+        }
+        case 0xEA: { // LD (nn),A
+            cycles = 16;
+            printf("LD (nn),A\n");
+            programCounter++;
+            break;
+        }
+        // LD A, (C)
+        // put value at address $FF00 + register C into A
+        // same as : LD A, ($FF00+C)
+        case 0xF2: { // LD A, ($FF00+C)
+            cycles = 8;
+            printf("LD A, ($FF00+C)\n");
+            programCounter++;
+            break;
+        }
+        // LD (C), A
+        // Put A into address $FF00 + register C
+        // (like the opposite of LD A, (C))
+        case 0xE2: { // LD ($FF00+C), A
+            cycles = 8;
+            printf("LD ($FF00+C), A\n");
+            programCounter++;
+            break;
+        }
+        // LD A, (HLD)
+        // LD A, (HL-)
+        // LDD A, (HL)
+        // put value at address HL into A. Decrement HL
+        // those 3 instructions are identical
+        case 0x3A: {
+            cycles = 8;
+            printf("LDD A, (HL)\n");
+            programCounter++;
+            break;
+        }
+        // LD (HLD), A
+        // LD (HL-), A
+        // LDD (HL), A
+        // put A into memory address HL. Decrement HL.
+        // those 3 are identical
+        case 0x32: {
+            cycles = 8;
+            printf("LDD (HL), A\n");
+            programCounter++;
+            break;
+        }
+        // LD A, (HLI)
+        // LD A, (HL+)
+        // LDI A, (HL)
+        // Put value at address HL into A. Increment HL.
+        // all the same
+        case 0x2A: {
+            cycles = 8;
+            printf("LDI A, (HL)\n");
+            programCounter++;
+            break;
+        }
+        // LD (HLI), A
+        // LD (HL+), A
+        // LDI (HL), A
+        // Put A into memory address HL. Increment HL.
+        case 0x22: {
+            cycles = 8;
+            printf("LDI (HLI), A\n");
+            programCounter++;
+            break;
+        }
+        // LDH (n), A
+        // Put A into memory address $FF00+n
+        // n = one byte immediate value
+        case 0xE0: {
+            cycles = 12;
+            printf("LD ($FF00+n), A\n");
+            programCounter++;
+            break;
+        }
+        // LDH A, (n)
+        // put memory address $FF00 into A
+        // n = one byte immediate value
+        case 0xF0: {
+            cycles = 12;
+            printf("LD A, ($FF00+n)\n");
+            programCounter++;
+            break;
+        }
+
+        // 16 bit loads
+
+        // LD n, nn
+        // put value nn into n
+        // n = BC, DE, HL, SP
+        // nn = 16 bit immediate value
+
+        case 0x01: {
+            cycles = 12;
+            printf("LD BC, nn\n");
+            programCounter++;
+            break;
+        }
+        case 0x11: {
+            cycles = 12;
+            printf("LD DE, nn\n");
+            programCounter++;
+            break;
+        }
+        case 0x21: {
+            cycles = 12;
+            printf("LD HL, nn\n");
+            programCounter++;
+            break;
+        }
+        case 0x31: {
+            cycles = 12;
+            printf("LD SP, nn\n");
+            programCounter++;
+            break;
+        }
+
+        // LD SP, HL
+        // put HL into SP
+        case 0xF9: {
+            cycles = 8;
+            printf("LD SP, HL\n");
+            programCounter++;
+            break;
+        }
+
+        // LD HL, SP+n
+        // LDHL SP,n
+        // put SP + n effective address into HL
+        // n = one byte SIGNED immediate value
+        // flags affected
+        // Z - RESET
+        // N - RESET
+        // H - set or reset based on result
+        // C - set or reset based on result
+        case 0xF8: {
+            cycles = 12;
+            printf("LDHL SP, n\n");
+            programCounter++;
+            break;
+        }
+
+        // LD (nn), SP
+        // put SP at address nn
+        // nn = two byte immediate value
+        case 0x08: {
+            cycles = 20;
+            printf("LD (nn), SP\n");
+            programCounter++;
+            break;
+        }
+
+        // PUSH nn
+        // push register pair nn onto stack
+        // decrement SP twice
+        // nn = AF, BC, DE, HL
+        case 0xF5: {
+            cycles = 16;
+            printf("PUSH AF\n");
+            programCounter++;
+            break;
+        }
+        case 0xC5: {
+            cycles = 16;
+            printf("PUSH BC\n");
+            programCounter++;
+            break;
+        }
+        case 0xD5: {
+            cycles = 16;
+            printf("PUSH DE\n");
+            programCounter++;
+            break;
+        }
+        case 0xE5: {
+            cycles = 16;
+            printf("PUSH HL\n");
+            programCounter++;
+            break;
+        }
+
+        // POP nn
+        // pop two bytes off the satck into register pair nn
+        // increment SP twice
+
+        case 0xF1: {
+            cycles = 12;
+            printf("POP AF\n");
+            programCounter++;
+            break;
+        }
+        case 0xC1: {
+            cycles = 12;
+            printf("POP BC\n");
+            programCounter++;
+            break;
+        }
+        case 0xD1: {
+            cycles = 12;
+            printf("POP DE\n");
+            programCounter++;
+            break;
+        }
+        case 0xE1: {
+            cycles = 12;
+            printf("POP HL\n");
+            programCounter++;
+            break;
+        }
+
+        // 8 bit ALU
+        // ADD A, n
+        // add n to A
+        // n = A, B, C, D, E, H, L, (HL), #
+        // flags
+        // Z - set if result is 0
+        // N - reset
+        // H - set if carry from bit 3
+        // C - set if carry from bit 7
+        case 0x87: {
+            cycles = 4;
+            printf("ADD A,A\n");
+            programCounter++;
+            break;
+        }
+        case 0x80: {
+            cycles = 4;
+            printf("ADD A,B\n");
+            programCounter++;
+            break;
+        }
+        case 0x81: {
+            cycles = 4;
+            printf("ADD A,C\n");
+            programCounter++;
+            break;
+        }
+        case 0x82: {
+            cycles = 4;
+            printf("ADD A,D\n");
+            programCounter++;
+            break;
+        }
+        case 0x83: {
+            cycles = 4;
+            printf("ADD A,E\n");
+            programCounter++;
+            break;
+        }
+        case 0x84: {
+            cycles = 4;
+            printf("ADD A,H\n");
+            programCounter++;
+            break;
+        }
+        case 0x85: {
+            cycles = 4;
+            printf("ADD A,L\n");
+            programCounter++;
+            break;
+        }
+        case 0x86: {
+            cycles = 8;
+            printf("ADD A,(HL)\n");
+            programCounter++;
+            break;
+        }
+        case 0xC6: {
+            cycles = 8;
+            printf("ADD A,#\n");
+            programCounter++;
+            break;
+        }
+        // ADC A,n
+        // add n + carry flag to A
+        // n = A, B, C, D, E, H, L, (HL), #
+        // flags
+        // Z - set if result is 0
+        // N - reset
+        // H - set if carry from bit 3
+        // C - set if carry from bit 7
+        case 0x8F: {
+            cycles = 4;
+            printf("ADC A,A\n");
+            programCounter++;
+            break;
+        }
+        case 0x88: {
+            cycles = 4;
+            printf("ADC A,B\n");
+            programCounter++;
+            break;
+        }
+        case 0x89: {
+            cycles = 4;
+            printf("ADC A,C\n");
+            programCounter++;
+            break;
+        }
+        case 0x8A: {
+            cycles = 4;
+            printf("ADC A,D\n");
+            programCounter++;
+            break;
+        }
+        case 0x8B: {
+            cycles = 4;
+            printf("ADC A,E\n");
+            programCounter++;
+            break;
+        }
+        case 0x8C: {
+            cycles = 4;
+            printf("ADC A,H\n");
+            programCounter++;
+            break;
+        }
+        case 0x8D: {
+            cycles = 4;
+            printf("ADC A,L\n");
+            programCounter++;
+            break;
+        }
+        case 0x8E: {
+            cycles = 8;
+            printf("ADC A,(HL)\n");
+            programCounter++;
+            break;
+        }
+        case 0xCE: {
+            cycles = 8;
+            printf("ADC A,#\n");
+            programCounter++;
+            break;
+        }
+
+        // SUB n
+        // subtract n from A
+        // n = A, B, C, D, E, H, L, (HL), #
+        // flags
+        // Z - set if result is 0
+        // N - set
+        // H - set if no borrow from bit 4
+        // C - set if no borrow
+        case 0x97: {
+            cycles = 4;
+            printf("SUB A\n");
+            programCounter++;
+            break;
+        }
+        case 0x90: {
+            cycles = 4;
+            printf("SUB B\n");
+            programCounter++;
+            break;
+        }
+        case 0x91: {
+            cycles = 4;
+            printf("SUB C\n");
+            programCounter++;
+            break;
+        }
+        case 0x92: {
+            cycles = 4;
+            printf("SUB D\n");
+            programCounter++;
+            break;
+        }
+        case 0x93: {
+            cycles = 4;
+            printf("SUB E\n");
+            programCounter++;
+            break;
+        }
+        case 0x94: {
+            cycles = 4;
+            printf("SUB H\n");
+            programCounter++;
+            break;
+        }
+        case 0x95: {
+            cycles = 4;
+            printf("SUB L\n");
+            programCounter++;
+            break;
+        }
+        case 0x96: {
+            cycles = 8;
+            printf("SUB (HL)\n");
+            programCounter++;
+            break;
+        }
+        case 0xD6: {
+            cycles = 8;
+            printf("SUB #\n");
+            programCounter++;
+            break;
+        }
+        // SBC A,n
+        // subtract n + carry flag from A
+        // n = A, B, C, D, E, H, L, (HL), #
+        // flags
+        // Z - set if result is 0
+        // N - set
+        // H - set if no borrow from bit 4
+        // C - set if no borrow
+        case 0x9F: {
+            cycles = 4;
+            printf("SBC A,A\n");
+            programCounter++;
+            break;
+        }
+        case 0x98: {
+            cycles = 4;
+            printf("SBC A,B\n");
+            programCounter++;
+            break;
+        }
+        case 0x99: {
+            cycles = 4;
+            printf("SBC A,C\n");
+            programCounter++;
+            break;
+        }
+        case 0x9A: {
+            cycles = 4;
+            printf("SBC A,D\n");
+            programCounter++;
+            break;
+        }
+        case 0x9B: {
+            cycles = 4;
+            printf("SBC A,E\n");
+            programCounter++;
+            break;
+        }
+        case 0x9C: {
+            cycles = 4;
+            printf("SBC A,H\n");
+            programCounter++;
+            break;
+        }
+        case 0x9D: {
+            cycles = 4;
+            printf("SBC A,L\n");
+            programCounter++;
+            break;
+        }
+        case 0x9E: {
+            cycles = 8;
+            printf("SBC A,(HL)\n");
+            programCounter++;
+            break;
+        }
+        // MYSTERY! the op code is unknown lol
+        // case 0x??: {
+        //     cycles = ??;
+        //     printf("SBC A,#\n");
+        //     programCounter++;
+        //     break;
+        // }
+
+        // AND n
+        // Logically AND n with A, result in A
+        // n = A, B, C, D, E, H, L, (HL), #
+        // flags
+        // Z - set if result is 0
+        // N - reset
+        // H - set
+        // C - reset
+        case 0xA7: {
+            cycles = 4;
+            printf("AND A\n");
+            programCounter++;
+            break;
+        }
+        case 0xA0: {
+            cycles = 4;
+            printf("AND B\n");
+            programCounter++;
+            break;
+        }
+        case 0xA1: {
+            cycles = 4;
+            printf("AND C\n");
+            programCounter++;
+            break;
+        }
+        case 0xA2: {
+            cycles = 4;
+            printf("AND D\n");
+            programCounter++;
+            break;
+        }
+        case 0xA3: {
+            cycles = 4;
+            printf("AND E\n");
+            programCounter++;
+            break;
+        }
+        case 0xA4: {
+            cycles = 4;
+            printf("AND H\n");
+            programCounter++;
+            break;
+        }
+        case 0xA5: {
+            cycles = 4;
+            printf("AND L\n");
+            programCounter++;
+            break;
+        }
+        case 0xA6: {
+            cycles = 8;
+            printf("AND (HL)\n");
+            programCounter++;
+            break;
+        }
+        case 0xE6: {
+            cycles = 8;
+            printf("AND #\n");
+            programCounter++;
+            break;
+        }
+
+        // OR n
+        // logical OR n with register A, result in A
+        // n = A, B, C, D, E, H, L, (HL), #
+        // flags
+        // Z - set if result is 0
+        // N, H, C - reset
+
+        case 0xB7: {
+            cycles = 4;
+            printf("OR A\n");
+            programCounter++;
+            break;
+        }
+        case 0xB0: {
+            cycles = 4;
+            printf("OR B\n");
+            programCounter++;
+            break;
+        }
+        case 0xB1: {
+            cycles = 4;
+            printf("OR C\n");
+            programCounter++;
+            break;
+        }
+        case 0xB2: {
+            cycles = 4;
+            printf("OR D\n");
+            programCounter++;
+            break;
+        }
+        case 0xB3: {
+            cycles = 4;
+            printf("OR E\n");
+            programCounter++;
+            break;
+        }
+        case 0xB4: {
+            cycles = 4;
+            printf("OR H\n");
+            programCounter++;
+            break;
+        }
+        case 0xB5: {
+            cycles = 4;
+            printf("OR L\n");
+            programCounter++;
+            break;
+        }
+        case 0xB6: {
+            cycles = 8;
+            printf("OR (HL)\n");
+            programCounter++;
+            break;
+        }
+        case 0xF6: {
+            cycles = 8;
+            printf("OR #\n");
+            programCounter++;
+            break;
+        }
+
+        // XOR n
+        // logical exclusive OR n with register A, result in A
+        // n = A, B, C, D, E, H, L, (HL), #
+        // flags
+        // Z - set if result is 0
+        // N, H, C - reset
+
+        case 0xAF: {
+            cycles = 4;
+            printf("XOR A\n");
+            programCounter++;
+            break;
+        }
+        case 0xA8: {
+            cycles = 4;
+            printf("XOR B\n");
+            programCounter++;
+            break;
+        }
+        case 0xA9: {
+            cycles = 4;
+            printf("XOR C\n");
+            programCounter++;
+            break;
+        }
+        case 0xAA: {
+            cycles = 4;
+            printf("XOR D\n");
+            programCounter++;
+            break;
+        }
+        case 0xAB: {
+            cycles = 4;
+            printf("XOR E\n");
+            programCounter++;
+            break;
+        }
+        case 0xAC: {
+            cycles = 4;
+            printf("XOR H\n");
+            programCounter++;
+            break;
+        }
+        case 0xAD: {
+            cycles = 4;
+            printf("XOR L\n");
+            programCounter++;
+            break;
+        }
+        case 0xAE: {
+            cycles = 8;
+            printf("XOR (HL)\n");
+            programCounter++;
+            break;
+        }
+        case 0xEE: {
+            cycles = 8;
+            printf("XOR #\n");
+            programCounter++;
+            break;
+        }
+
+        // CP n
+        // compare A with n. this is A - n, but results are thrown away
+        // n = A, B, C, D, E, H, L, (HL), #
+        // flags
+        // Z - set if result is 0. ie. if A = n
+        // N - set
+        // H - set if no borrow from bit 4
+        // C - set if no borrow (A < n)
+
+
+
+
+
+
 
         default: { // Not implimented yet
             cycles = 4;
